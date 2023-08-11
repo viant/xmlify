@@ -42,7 +42,7 @@ type (
 		xField      *xunsafe.Field
 		unique      bool
 		stringifier io2.FieldStringifierFn
-		tag         *Tag // TODO MFI change name, make private
+		tag         *Tag
 	}
 
 	Reference struct {

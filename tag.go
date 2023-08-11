@@ -5,7 +5,7 @@ import "strings"
 // TODO MFI delete unused
 // Tag represent field tag
 type Tag struct {
-	Name             string
+	Name             string //
 	Autoincrement    bool
 	PrimaryKey       bool
 	Sequence         string
@@ -22,7 +22,7 @@ type Tag struct {
 	NullifyEmpty     bool
 	ErrorMgs         string
 	PresenceProvider bool
-	Bit              bool
+	Tabular          bool //
 	Encoding         string
 }
 
@@ -38,7 +38,7 @@ func ParseTag(tagString string) *Tag {
 	if len(elements) == 0 {
 		return tag
 	}
-	for i, element := range elements {
+	for _, element := range elements {
 		nv := strings.Split(element, "=")
 		switch len(nv) {
 		case 2:
@@ -70,8 +70,8 @@ func ParseTag(tagString string) *Tag {
 				tag.RefColumn = nv[1]
 			case "transient":
 				tag.Transient = strings.TrimSpace(nv[1]) == "true"
-			case "bit":
-				tag.Bit = strings.TrimSpace(nv[1]) == "true"
+			case "tabular":
+				tag.Tabular = strings.TrimSpace(nv[1]) == "true"
 			case "required":
 				tag.Required = strings.TrimSpace(nv[1]) == "true"
 			case "errormsg":
@@ -91,15 +91,11 @@ func ParseTag(tagString string) *Tag {
 			}
 			continue
 		case 1:
-			if i == 0 {
-				tag.Name = strings.TrimSpace(element)
-				continue
-			}
 			switch strings.ToLower(element) {
 			case "autoincrement":
 				tag.PrimaryKey = true
-			case "bit":
-				tag.Bit = true
+			case "tabular":
+				tag.Tabular = true
 			case "primarykey":
 				tag.PrimaryKey = true
 			case "unique":

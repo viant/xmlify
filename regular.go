@@ -14,29 +14,30 @@ func (w *writer) writeRegularAllObjects(acc *Accessor, parentLevel bool) {
 	}
 
 	if parentLevel {
-		w.buffer.writeString(`<?xml version="1.0" encoding="UTF-8" ?>`)
+		w.buffer.writeString(`<?xml version="1.0" encoding="UTF-8" ?>`) // TODO add to config?
 	}
 
-	////////////
-	var fieldName string
-	var fieldKind reflect.Kind
-	if acc.field != nil {
-		fieldName = acc.field.Name // TODO MFI parse tag and so on
-		tag := ParseTag(acc.field.Tag.Get(TagName))
-		if tag.Name != "" {
-			fieldName = tag.Name
-		}
-
-		fieldKind = acc.field.Kind()
-	}
-	//////
-	if fieldName == "result" {
+	if acc.fieldTag != nil && acc.fieldTag.Tabular {
 		w.writeTabularAllObjects(acc, parentLevel)
 		return
 	}
 
-	//////
-	rowFieldName := w.config.regularRowTag
+	var fieldKind reflect.Kind
+	var fieldName string
+	var rowFieldName string
+
+	if acc.field != nil {
+		fieldName = acc.field.Name // TODO MFI parse tag and so on
+		fieldKind = acc.field.Kind()
+	}
+
+	// TODO add tag as value not pointer?
+	if acc.fieldTag != nil && acc.fieldTag.Name != "" {
+		fieldName = acc.fieldTag.Name
+	}
+
+	// TODO move
+	rowFieldName = w.config.regularRowTag
 	if fieldKind == reflect.Slice && fieldName != "" {
 		rowFieldName = fieldName
 	}
@@ -48,31 +49,25 @@ func (w *writer) writeRegularAllObjects(acc *Accessor, parentLevel bool) {
 
 	omitRootElement := false
 
-	if parentLevel {
-		if acc.slice == nil && len(acc.fields) == 1 {
-			f0Type := acc.fields[0].xField.Type
-			f0Kind := f0Type.Kind()
-			if f0Kind == reflect.Ptr {
-				f0Type = f0Type.Elem()
-				f0Kind = f0Type.Kind()
-			}
+	if parentLevel && acc.slice == nil && len(acc.fields) == 1 { //TODO rebuild and add test with struct = {nestedstruct01, nestedstruct02}
+		f0Type := acc.fields[0].xField.Type
+		f0Kind := f0Type.Kind()
+		if f0Kind == reflect.Ptr {
+			f0Type = f0Type.Elem()
+			f0Kind = f0Type.Kind()
+		}
 
-			if f0Kind == reflect.Struct {
-				omitRootElement = true
-			}
+		if f0Kind == reflect.Struct {
+			omitRootElement = true
 		}
 	}
 
-	if parentLevel && omitRootElement {
-
-	} else {
-		if fieldKind != reflect.Slice && fieldName != "" {
-			w.buffer.writeString(w.config.newLine + "<" + fieldName + ">") // TODO MFI
-			defer w.buffer.writeString(w.config.newLine + "</" + fieldName + ">")
-		}
+	if !(parentLevel && omitRootElement) && fieldKind != reflect.Slice && fieldName != "" {
+		w.buffer.writeString(w.config.newLine + "<" + fieldName + ">")
+		defer w.buffer.writeString(w.config.newLine + "</" + fieldName + ">")
 	}
 
-	headers, _ /*hTypes*/ := acc.RegularHeaders()
+	headers, _ /*hTypes*/ := acc.RegularHeaders() //TODO rename
 	var xType *xunsafe.Type
 
 	for i := 0; i < w.size; i++ {

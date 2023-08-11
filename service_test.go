@@ -157,7 +157,7 @@ func Test_RegularXML_Response_Marshal(t *testing.T) {
 		useAssertPkg  bool
 	}{
 		{
-			description: "01 response",
+			description: "01 response ver. 01",
 			rType:       reflect.TypeOf(Response{}),
 			input: Response{
 				Request: &Request{
@@ -180,24 +180,24 @@ func Test_RegularXML_Response_Marshal(t *testing.T) {
 
 			expected: `<?xml version="1.0" encoding="UTF-8" ?>
 <root>
-  <request>
-    <query_string>views=TOTAL&amp;amp;from=2023-08-06&amp;amp;to</query_string>
-    <timestamp>2023-08023</timestamp>
-    <viewId>total</viewId>
-  </request>
-  <result>
-    <avails>2476852</avails>
-    <clearingPrice>0.43943723015873004</clearingPrice>
-    <finalHhUniqsV1>37500</finalHhUniqsV1>
-    <uniqs>520000</uniqs>
-  </result>
-  <sql>werwerewrew</sql>
-  <filter>
-    <providerTaxonomy>
-      <include-ids>1</include-ids>
-      <include-ids>2</include-ids>
-    </providerTaxonomy>
-  </filter>
+<request>
+<query_string>views=TOTAL&amp;amp;from=2023-08-06&amp;amp;to</query_string>
+<timestamp>2023-08023</timestamp>
+<viewId>total</viewId>
+</request>
+<result>
+<avails>2476852</avails>
+<clearingPrice>0.43943723015873004</clearingPrice>
+<finalHhUniqsV1>37500</finalHhUniqsV1>
+<uniqs>520000</uniqs>
+</result>
+<sql>werwerewrew</sql>
+<filter>
+<providerTaxonomy>
+  <include-ids>1</include-ids>
+  <include-ids>2</include-ids>
+</providerTaxonomy>
+</filter>
 </root>`,
 			config:        getMixedConfig(), //getRegularConfig(),
 			depthsConfigs: []*Config{getTabularConfig(), getTabularConfig(), getTabularConfig()},

@@ -22,10 +22,11 @@ type (
 		slicePtr       unsafe.Pointer
 		slice          *xunsafe.Slice
 
-		ptr    unsafe.Pointer // refering to a single object
-		field  *xunsafe.Field // used to get value from parent pointer
-		holder string
-		xType  *xunsafe.Type
+		ptr      unsafe.Pointer // refering to a single object
+		field    *xunsafe.Field // used to get value from parent pointer
+		fieldTag *Tag
+		holder   string
+		xType    *xunsafe.Type
 	}
 
 	stringified struct {

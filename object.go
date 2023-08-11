@@ -160,12 +160,18 @@ func (o *Object) Accessor(accessorIndex int, mainConfig *Config, depth int, conf
 		return nil, err
 	}
 
+	var tag *Tag
+	if o.xField != nil {
+		tag = ParseTag(o.xField.Tag.Get(TagName))
+	}
+
 	accessor := &Accessor{
 		cache:               map[unsafe.Pointer]*stringified{},
 		path:                o.path,
 		config:              config,
 		fields:              o.fields,
 		field:               o.xField,
+		fieldTag:            tag,
 		children:            children,
 		slice:               o.xSlice,
 		parentAccessorIndex: accessorIndex,
