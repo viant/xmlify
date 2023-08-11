@@ -191,11 +191,12 @@ func Test_RegularXML_Response_Marshal(t *testing.T) {
 <finalHhUniqsV1>37500</finalHhUniqsV1>
 <uniqs>520000</uniqs>
 </result>
-<sql>werwerewrew</sql>
+<sql>werwerewrew
+</sql>
 <filter>
 <providerTaxonomy>
-  <include-ids>1</include-ids>
-  <include-ids>2</include-ids>
+<include-ids>1</include-ids>
+<include-ids>2</include-ids>
 </providerTaxonomy>
 </filter>
 </root>`,

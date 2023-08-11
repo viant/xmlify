@@ -95,7 +95,171 @@ func (w *writer) writeRegularAllObjects(acc *Accessor, parentLevel bool) {
 			//	rowFieldName = w.config.regularRowTag
 			//}
 
-			result, wasStrings, types, dataRowFieldTypes, shouldWrite := acc.stringifyRegularFields(w, &headers)
+			// TODO refector!!!
+			//for field := range acc.fields {
+			//	// stringify field
+			//	// check if have result
+			//	// if not find a child accessor corresponding with the field
+			//}
+
+			result, wasStrings, types, _, shouldWrite, fieldNames := acc.stringifyRegularFields(w, &headers)
+
+			//len(field)< len(result) // when one of field is a slice !!!
+
+			if fieldKind == reflect.Slice || acc.slice != nil {
+				w.buffer.writeString(w.config.newLine + "<" + rowFieldName + ">")
+			}
+
+			start := -1
+			end := -1
+
+			for _, field := range acc.fields {
+
+				start = -1
+				end = -1
+				for j, _ := range fieldNames {
+					if field.name == fieldNames[j] {
+						if start == -1 {
+							start = j
+							end = j
+						} else {
+							end = j
+						}
+					}
+				}
+
+				end = end + 1
+				if shouldWrite[start] {
+					// do all as usual
+					//TODO delete usnused arguments
+					w.writeRegularObject(result[start:end], wasStrings[start:end], types[start:end], []string{}, headers[start:end], shouldWrite[start:end])
+				}
+
+				for _, child := range acc.children {
+					if child.field.Name != field.name {
+						continue
+					}
+					_, childSize := child.values()
+
+					if childSize > 0 {
+						tmpSize := w.size
+						w.size = childSize
+						w.writeRegularAllObjects(child, false)
+						w.size = tmpSize
+					}
+
+					if childSize == 0 {
+						w.buffer.writeString("null")
+					}
+				}
+
+			}
+
+			//w.writeObject(result, wasStrings)
+
+			if fieldKind == reflect.Slice || acc.slice != nil {
+				w.buffer.writeString(w.config.newLine + "</" + rowFieldName + ">") //TODO MFI defer
+			}
+		} // ~ has loop
+	} // ~ main for loop
+}
+
+func (w *writer) writeRegularAllObjectsDEPR(acc *Accessor, parentLevel bool) {
+
+	if w.config.style != regularStyle {
+		//TODO MFI
+	}
+
+	if parentLevel {
+		w.buffer.writeString(`<?xml version="1.0" encoding="UTF-8" ?>`) // TODO add to config?
+	}
+
+	if acc.fieldTag != nil && acc.fieldTag.Tabular {
+		w.writeTabularAllObjects(acc, parentLevel)
+		return
+	}
+
+	var fieldKind reflect.Kind
+	var fieldName string
+	var rowFieldName string
+
+	if acc.field != nil {
+		fieldName = acc.field.Name // TODO MFI parse tag and so on
+		fieldKind = acc.field.Kind()
+	}
+
+	// TODO add tag as value not pointer?
+	if acc.fieldTag != nil && acc.fieldTag.Name != "" {
+		fieldName = acc.fieldTag.Name
+	}
+
+	// TODO move
+	rowFieldName = w.config.regularRowTag
+	if fieldKind == reflect.Slice && fieldName != "" {
+		rowFieldName = fieldName
+	}
+
+	// TODO user regularRootTag only if needed
+	if parentLevel && fieldName == "" {
+		fieldName = w.config.regularRootTag
+	}
+
+	omitRootElement := false
+
+	if parentLevel && acc.slice == nil && len(acc.fields) == 1 { //TODO rebuild and add test with struct = {nestedstruct01, nestedstruct02}
+		f0Type := acc.fields[0].xField.Type
+		f0Kind := f0Type.Kind()
+		if f0Kind == reflect.Ptr {
+			f0Type = f0Type.Elem()
+			f0Kind = f0Type.Kind()
+		}
+
+		if f0Kind == reflect.Struct {
+			omitRootElement = true
+		}
+	}
+
+	if !(parentLevel && omitRootElement) && fieldKind != reflect.Slice && fieldName != "" {
+		w.buffer.writeString(w.config.newLine + "<" + fieldName + ">")
+		defer w.buffer.writeString(w.config.newLine + "</" + fieldName + ">")
+	}
+
+	headers, _ /*hTypes*/ := acc.RegularHeaders() //TODO rename
+	var xType *xunsafe.Type
+
+	for i := 0; i < w.size; i++ {
+		acc.ResetAllChildren()
+
+		if parentLevel {
+			if i != 0 {
+				acc.Reset()
+			}
+			at := w.valueAt(i)
+			if i == 0 {
+				if reflect.TypeOf(at).Kind() == reflect.Ptr {
+					xType = w.dereferencer
+				}
+			}
+			if xType != nil {
+				at = xType.Deref(at)
+			}
+			acc.Set(xunsafe.AsPointer(at))
+		}
+
+		for acc.Has() {
+
+			//if !parentLevel && fieldName == "" {
+			//	rowFieldName = w.config.regularRowTag
+			//}
+
+			// TODO refector!!!
+			//for field := range acc.fields {
+			//	// stringify field
+			//	// check if have result
+			//	// if not find a child accessor corresponding with the field
+			//}
+
+			result, wasStrings, types, dataRowFieldTypes, shouldWrite, _ := acc.stringifyRegularFields(w, &headers)
 			if fieldKind == reflect.Slice || acc.slice != nil {
 				w.buffer.writeString(w.config.newLine + "<" + rowFieldName + ">")
 			}
@@ -269,9 +433,9 @@ func (a *Accessor) RegularHeaders() ([]string, []string) {
 	return headers, headerRowFieldTypes
 }
 
-func (a *Accessor) stringifyRegularFields(writer *writer, headers *[]string) ([]string, []bool, []string, []string, []bool) {
+func (a *Accessor) stringifyRegularFields(writer *writer, headers *[]string) ([]string, []bool, []string, []string, []bool, []string) {
 	if value, ok := a.cache[a.ptr]; ok {
-		return value.values, value.wasStrings, value.types, value.dataRowFieldTypes, value.shouldWrite
+		return value.values, value.wasStrings, value.types, value.dataRowFieldTypes, value.shouldWrite, value.fieldNames
 	}
 
 	shouldWrite := make([]bool, len(a.fields))
@@ -279,6 +443,7 @@ func (a *Accessor) stringifyRegularFields(writer *writer, headers *[]string) ([]
 	wasStrings := make([]bool, len(a.fields))
 	types := make([]string, len(a.fields))
 	dataRowFieldTypes := make([]string, len(a.fields))
+	fieldNames := make([]string, len(a.fields))
 
 	if a.ptr == nil {
 		strings := make([]string, len(a.fields))
@@ -286,7 +451,7 @@ func (a *Accessor) stringifyRegularFields(writer *writer, headers *[]string) ([]
 			strings[i] = writer.config.NullValue
 		}
 
-		return strings, make([]bool, len(a.fields)), make([]string, len(a.fields)), make([]string, len(a.fields)), make([]bool, len(a.fields))
+		return strings, make([]bool, len(a.fields)), make([]string, len(a.fields)), make([]string, len(a.fields)), make([]bool, len(a.fields)), make([]string, len(a.fields))
 	}
 
 	//var rowFieldType string
@@ -297,7 +462,7 @@ func (a *Accessor) stringifyRegularFields(writer *writer, headers *[]string) ([]
 	var feKind reflect.Kind
 
 	for i, field := range a.fields {
-
+		fieldNames[i+sliceOffset] = field.name
 		fType := field.xField.Type
 		fKind := fType.Kind()
 
@@ -354,6 +519,7 @@ func (a *Accessor) stringifyRegularFields(writer *writer, headers *[]string) ([]
 			types = append(types, make([]string, sHdr.Len-1)...)
 			*headers = append(*headers, make([]string, sHdr.Len-1)...)
 			shouldWrite = append(shouldWrite, make([]bool, sHdr.Len-1)...)
+			fieldNames = append(fieldNames, make([]string, sHdr.Len-1)...)
 
 			//fmt.Printf("sizElem Z = %d\n", sizeElem)
 
@@ -397,6 +563,7 @@ func (a *Accessor) stringifyRegularFields(writer *writer, headers *[]string) ([]
 				result[i+sliceOffset], wasStrings[i+sliceOffset] = z, true
 				types[i+sliceOffset] = "string" //TODO delete
 				shouldWrite[i+sliceOffset] = true
+				fieldNames[i+sliceOffset] = field.name
 				if sliceOffset > 0 {
 					(*headers)[i+sliceOffset] = (*headers)[i+sliceOffset-1]
 				}
@@ -409,6 +576,7 @@ func (a *Accessor) stringifyRegularFields(writer *writer, headers *[]string) ([]
 			result[i+sliceOffset], wasStrings[i+sliceOffset] = field.stringifier(a.ptr) //TODO how to get real type here?
 			types[i+sliceOffset] = field.xField.Type.String()
 			shouldWrite[i+sliceOffset] = true
+			fieldNames[i+sliceOffset] = field.name
 		}
 
 		//rowFieldType, ok = a.config.dataRowFieldTypes[types[i]]
@@ -426,7 +594,8 @@ func (a *Accessor) stringifyRegularFields(writer *writer, headers *[]string) ([]
 		types:             types,
 		dataRowFieldTypes: dataRowFieldTypes,
 		shouldWrite:       shouldWrite,
+		fieldNames:        fieldNames,
 	}
 
-	return result, wasStrings, types, dataRowFieldTypes, shouldWrite
+	return result, wasStrings, types, dataRowFieldTypes, shouldWrite, fieldNames
 }

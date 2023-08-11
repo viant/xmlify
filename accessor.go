@@ -35,6 +35,7 @@ type (
 		types             []string
 		dataRowFieldTypes []string
 		shouldWrite       []bool
+		fieldNames        []string
 	}
 )
 
