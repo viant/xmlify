@@ -128,7 +128,7 @@ func (a *Accessor) Headers() ([]string, []string) {
 		//	fmt.Printf(" %s tag = %s\n", field.name, tag)
 		//}
 		//	tag := field.xField.Type. //ParseTag(field.Tag.Get(option.TagSqlx))
-		if headers[i] = field.tag.Column; headers[i] == "" { //TODO MFI change Column to ??? xmlName
+		if headers[i] = field.tag.Name; headers[i] == "" {
 			headers[i] = field.name
 		}
 

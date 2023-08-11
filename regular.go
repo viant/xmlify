@@ -23,8 +23,8 @@ func (w *writer) writeRegularAllObjects(acc *Accessor, parentLevel bool) {
 	if acc.field != nil {
 		fieldName = acc.field.Name // TODO MFI parse tag and so on
 		tag := ParseTag(acc.field.Tag.Get(TagName))
-		if tag.Column != "" {
-			fieldName = tag.Column
+		if tag.Name != "" {
+			fieldName = tag.Name
 		}
 
 		fieldKind = acc.field.Kind()
@@ -246,7 +246,7 @@ func (a *Accessor) RegularHeaders() ([]string, []string) {
 		//	fmt.Printf(" %s tag = %s\n", field.name, tag)
 		//}
 		//	tag := field.xField.Type. //ParseTag(field.Tag.Get(option.TagSqlx))
-		if headers[i] = field.tag.Column; headers[i] == "" { //TODO MFI change Column to ??? xmlName
+		if headers[i] = field.tag.Name; headers[i] == "" {
 			headers[i] = field.name
 		}
 

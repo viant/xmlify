@@ -5,7 +5,7 @@ import "strings"
 // TODO MFI delete unused
 // Tag represent field tag
 type Tag struct {
-	Column           string
+	Name             string
 	Autoincrement    bool
 	PrimaryKey       bool
 	Sequence         string
@@ -44,7 +44,7 @@ func ParseTag(tagString string) *Tag {
 		case 2:
 			switch strings.ToLower(strings.TrimSpace(nv[0])) {
 			case "name":
-				tag.Column = strings.TrimSpace(nv[1])
+				tag.Name = strings.TrimSpace(nv[1])
 			case "ns":
 				tag.Ns = strings.TrimSpace(nv[1])
 			case "sequence":
@@ -92,7 +92,7 @@ func ParseTag(tagString string) *Tag {
 			continue
 		case 1:
 			if i == 0 {
-				tag.Column = strings.TrimSpace(element)
+				tag.Name = strings.TrimSpace(element)
 				continue
 			}
 			switch strings.ToLower(element) {
