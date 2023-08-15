@@ -43,6 +43,7 @@ type (
 		unique      bool
 		stringifier io2.FieldStringifierFn
 		tag         *Tag
+		xPath       string
 	}
 
 	Reference struct {
@@ -117,7 +118,9 @@ func (m *Marshaller) indexByPath(parentType reflect.Type, path string, excluded 
 }
 
 func (m *Marshaller) asKeys(path string, field reflect.StructField) (pathKey string, positionsKey string) {
-	name := field.Tag.Get(TagName)
+	tag := ParseTag(field.Tag.Get(TagName))
+	name := tag.Name
+
 	if name != "" {
 		return m.combine(path, name), name
 	}
@@ -176,7 +179,7 @@ func (m *Marshaller) newField(path string, holder string, field reflect.StructFi
 	}
 
 	tag := ParseTag(xField.Tag.Get(TagName))
-
+	xPath := tag.Path
 	return &Field{
 		path:        path,
 		xField:      xField,
@@ -186,6 +189,7 @@ func (m *Marshaller) newField(path string, holder string, field reflect.StructFi
 		holder:      holder,
 		stringifier: io2.Stringifier(xField, false, m.config.NullValue, stringifierConfig),
 		tag:         tag,
+		xPath:       xPath,
 	}
 }
 

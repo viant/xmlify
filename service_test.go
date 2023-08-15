@@ -94,6 +94,119 @@ func Test_RegularXML_TODO_NOT_PASSED_Marshal(t *testing.T) {
 	}
 }
 
+func Test_RegularXML_Attributes_Marshal(t *testing.T) {
+
+	type Example01 struct {
+		Id     int `xmlify:"path=@id"`
+		Name   string
+		Flag01 string `xmlify:"path=@flag_01"`
+		Desc   string
+		Flag02 string `xmlify:"path=@flag_02"`
+	}
+
+	type Example02B struct {
+		Ex Example01
+	}
+
+	type ProviderTaxonomy struct {
+		IncludeIds []int `xmlify:"path=@include-ids"`
+	}
+
+	type Filter struct {
+		ProviderTaxonomy *ProviderTaxonomy `xmlify:"name=provider_taxonomy"`
+	}
+
+	type Response struct {
+		Filter *Filter `xmlify:"name=filter"`
+	}
+
+	var testCases = []struct {
+		description   string
+		rType         reflect.Type
+		input         interface{}
+		expected      string
+		config        *Config
+		depthsConfigs []*Config
+		useAssertPkg  bool
+	}{
+		{
+			description: "01 simple attribute",
+			rType:       reflect.TypeOf(Example02B{}),
+			input: Example02B{
+				Ex: Example01{
+					Id:     1,
+					Name:   "name for 1",
+					Flag01: "f1",
+					Desc:   "description 1",
+					Flag02: "f2",
+				},
+			},
+			expected: `<?xml version="1.0" encoding="UTF-8" ?>
+<Ex id="1" flag_01="f1" flag_02="f2">
+<Name>name for 1</Name>
+<Desc>description 1</Desc>
+</Ex>
+`,
+			config: getMixedConfig(),
+		},
+		{
+			description: "02 slice as attribute",
+			rType:       reflect.TypeOf(Response{}),
+			input: Response{
+				Filter: &Filter{
+					ProviderTaxonomy: &ProviderTaxonomy{
+						IncludeIds: []int{1, 2}},
+				},
+			},
+
+			expected: `<?xml version="1.0" encoding="UTF-8" ?>
+<filter>
+<provider_taxonomy include-ids="1,2">
+</provider_taxonomy>
+</filter>`,
+			config:        getMixedConfig(), //getRegularConfig(),
+			depthsConfigs: []*Config{getTabularConfig(), getTabularConfig(), getTabularConfig()},
+			useAssertPkg:  false,
+		},
+	}
+	for _, testCase := range testCases[1:2] {
+
+		if testCase.rType == nil {
+			fn, ok := (testCase.input).(func() interface{})
+			assert.True(t, ok, testCase.description)
+
+			testCase.input = fn()
+			testCase.rType = reflect.TypeOf(testCase.input)
+			if testCase.rType.Kind() == reflect.Slice {
+				testCase.rType = testCase.rType.Elem()
+			}
+		}
+
+		marshaller, err := NewMarshaller(testCase.rType, testCase.config)
+		if !assert.Nil(t, err, testCase.description) {
+			continue
+		}
+
+		marshal, err := marshaller.Marshal(testCase.input, testCase.depthsConfigs)
+		if !assert.Nil(t, err, testCase.description) {
+			continue
+		}
+
+		if !assert.Nil(t, err, testCase.description) {
+			continue
+		}
+
+		actual := string(marshal)
+
+		if testCase.useAssertPkg {
+			assert.EqualValues(t, testCase.expected, actual)
+			continue
+		}
+
+		assertly.AssertValues(t, testCase.expected, actual, testCase.description)
+	}
+}
+
 func Test_RegularXML_Response_Marshal(t *testing.T) {
 
 	type Request struct {

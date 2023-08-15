@@ -6,6 +6,7 @@ import "strings"
 // Tag represent field tag
 type Tag struct {
 	Name             string //
+	Path             string
 	Autoincrement    bool
 	PrimaryKey       bool
 	Sequence         string
@@ -45,6 +46,8 @@ func ParseTag(tagString string) *Tag {
 			switch strings.ToLower(strings.TrimSpace(nv[0])) {
 			case "name":
 				tag.Name = strings.TrimSpace(nv[1])
+			case "path":
+				tag.Path = strings.TrimSpace(nv[1])
 			case "ns":
 				tag.Ns = strings.TrimSpace(nv[1])
 			case "sequence":

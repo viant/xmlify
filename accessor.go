@@ -2,6 +2,8 @@ package xmlify
 
 import (
 	io2 "github.com/viant/sqlx/io"
+	"strings"
+
 	//io2 "github.com/viant/sqlx/io"
 	"github.com/viant/xunsafe"
 	"unsafe"
@@ -270,4 +272,19 @@ func (a *Accessor) Interfacer() *xunsafe.Type {
 	}
 
 	return a.xType
+}
+
+func (a *Accessor) areAttributes() ([]bool, []string, bool) {
+	hasAttr := false
+	areAttr := make([]bool, len(a.fields))
+	names := make([]string, len(a.fields))
+	for i, field := range a.fields {
+		if areAttr[i] = strings.HasPrefix(field.xPath, "@"); areAttr[i] {
+			names[i] = field.xPath[1:]
+			hasAttr = true
+		}
+
+	}
+
+	return areAttr, names, hasAttr
 }
