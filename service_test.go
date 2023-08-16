@@ -1231,8 +1231,8 @@ func getRegularConfig() *Config {
 			"*time.Time": "date",
 		},
 		NullValueTODO:  "nil=\"true\"", //TODO MFI
-		regularRootTag: "root",
-		regularRowTag:  "row",
+		RegularRootTag: "root",
+		RegularRowTag:  "row",
 	}
 }
 
@@ -1311,7 +1311,7 @@ func getMixedConfig() *Config {
 			"*time.Time": "date",
 		},
 		NullValueTODO:  "nil=\"true\"", //TODO MFI
-		regularRootTag: "root",
-		regularRowTag:  "row",
+		RegularRootTag: "root",
+		RegularRowTag:  "row",
 	}
 }

@@ -26,8 +26,8 @@ type (
 		NullValueTODO          string
 		NewLine                string
 		////
-		regularRootTag string
-		regularRowTag  string
+		RegularRootTag string
+		RegularRowTag  string
 		// TODO map of types for header and data
 		FieldSeparator    string
 		ObjectSeparator   string

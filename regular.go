@@ -37,14 +37,14 @@ func (w *writer) writeRegularAllObjects(acc *Accessor, parentLevel bool) {
 	}
 
 	// TODO move
-	rowFieldName = w.config.regularRowTag
+	rowFieldName = w.config.RegularRowTag
 	if fieldKind == reflect.Slice && fieldName != "" {
 		rowFieldName = fieldName
 	}
 
-	// TODO user regularRootTag only if needed
+	// TODO user RegularRootTag only if needed
 	if parentLevel && fieldName == "" {
-		fieldName = w.config.regularRootTag
+		fieldName = w.config.RegularRootTag
 	}
 
 	omitRootElement := false
