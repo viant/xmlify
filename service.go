@@ -308,7 +308,7 @@ func (m *Marshaller) marshalData(fnValueAt io2.ValueAccessor, size int, object *
 
 	writer := newWriter(accessor, m.config, buffer, m.xType, fnValueAt, size, "")
 
-	if m.config.style == tabularStyle {
+	if m.config.Style == tabularStyle {
 		writer.writeTabularAllObjects(accessor, true)
 	} else {
 		writer.writeRegularAllObjects(accessor, true)

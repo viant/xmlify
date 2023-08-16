@@ -136,7 +136,7 @@ func (a *Accessor) Headers() ([]string, []string) {
 			headers[i] = field.name
 		}
 
-		rowFieldType, ok = a.config.headerRowFieldType[field.xField.Type.String()]
+		rowFieldType, ok = a.config.HeaderRowFieldType[field.xField.Type.String()]
 		if ok {
 			headerRowFieldTypes[i] = rowFieldType
 		} else {
@@ -185,7 +185,7 @@ func (a *Accessor) stringifyFields(writer *writer) ([]string, []bool, []string, 
 		result[i], wasStrings[i] = field.stringifier(a.ptr) //TODO how to get real type here?
 		types[i] = field.xField.Type.String()
 
-		rowFieldType, ok = a.config.dataRowFieldTypes[types[i]]
+		rowFieldType, ok = a.config.DataRowFieldTypes[types[i]]
 		if ok {
 			dataRowFieldTypes[i] = rowFieldType
 		} else {

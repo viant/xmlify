@@ -9,7 +9,7 @@ import (
 
 func (w *writer) writeRegularAllObjects(acc *Accessor, parentLevel bool) {
 
-	if w.config.style != regularStyle {
+	if w.config.Style != regularStyle {
 		//TODO MFI
 	}
 
@@ -66,12 +66,12 @@ func (w *writer) writeRegularAllObjects(acc *Accessor, parentLevel bool) {
 
 	if !(parentLevel && omitRootElement) && fieldKind != reflect.Slice && fieldName != "" {
 		if containAttr {
-			w.buffer.writeString(w.config.newLine + "<" + fieldName)
+			w.buffer.writeString(w.config.NewLine + "<" + fieldName)
 		} else {
-			w.buffer.writeString(w.config.newLine + "<" + fieldName + ">")
+			w.buffer.writeString(w.config.NewLine + "<" + fieldName + ">")
 		}
 
-		defer w.buffer.writeString(w.config.newLine + "</" + fieldName + ">")
+		defer w.buffer.writeString(w.config.NewLine + "</" + fieldName + ">")
 	}
 
 	headers, _ /*hTypes*/ := acc.RegularHeaders() //TODO rename
@@ -103,7 +103,7 @@ func (w *writer) writeRegularAllObjects(acc *Accessor, parentLevel bool) {
 			//len(field)< len(result) // when one of field is a slice !!!
 
 			if fieldKind == reflect.Slice || acc.slice != nil {
-				w.buffer.writeString(w.config.newLine + "<" + rowFieldName + ">")
+				w.buffer.writeString(w.config.NewLine + "<" + rowFieldName + ">")
 			}
 
 			// writing fields one by one in correct order (field can be a slice or attribute)
@@ -179,7 +179,7 @@ func (w *writer) writeRegularAllObjects(acc *Accessor, parentLevel bool) {
 			}
 
 			if fieldKind == reflect.Slice || acc.slice != nil {
-				w.buffer.writeString(w.config.newLine + "</" + rowFieldName + ">") //TODO MFI defer
+				w.buffer.writeString(w.config.NewLine + "</" + rowFieldName + ">") //TODO MFI defer
 			}
 
 		} // ~ has loop
@@ -205,8 +205,8 @@ func WriteRegularObject(writer *Buffer, config *Config, values []string, wasStri
 		asString := EscapeSpecialChars(values[j], config) //TODO MFI escaping
 
 		if asString == escapedNullValue {
-			asString = config.nullValueTODO
-			asString = config.newLine + "<" + headers[j] +
+			asString = config.NullValueTODO
+			asString = config.NewLine + "<" + headers[j] +
 				" " + asString +
 				"/>"
 			writer.writeString(asString)
@@ -215,16 +215,16 @@ func WriteRegularObject(writer *Buffer, config *Config, values []string, wasStri
 
 		// if wasString[j] { every value has to be string
 
-		//dataType := dataRowFieldTypes[j]
+		//dataType := DataRowFieldTypes[j]
 
 		///////////
 		//if dataType != "string" {
-		//	asString = config.newLine + "<" + headers[j] +
+		//	asString = config.NewLine + "<" + headers[j] +
 		//		" " + dataType + "=" +
 		//		config.EncloseBy + asString + config.EncloseBy +
 		//		"/>"
 		//} else {
-		asString = config.newLine + "<" + headers[j] + ">" +
+		asString = config.NewLine + "<" + headers[j] + ">" +
 			asString +
 			"</" + headers[j] + ">"
 		//}
@@ -271,7 +271,7 @@ func WriteRegularObjectAttr(writer *Buffer, config *Config, values []string, was
 		lastAttr = currentAttr
 
 		if asString == escapedNullValue {
-			asString = config.nullValueTODO
+			asString = config.NullValueTODO
 			writer.writeString(asString)
 			continue
 		}
@@ -301,10 +301,10 @@ func WriteRegularHeaderObject(writer *Buffer, config *Config, values []string, w
 
 		asString := EscapeSpecialChars(values[j], config) //TODO MFI escaping
 		if wasString[j] {
-			asString = config.newLine + "<" + config.headerRowTag + " " + config.headerRowFieldAttr + "=" +
+			asString = config.NewLine + "<" + config.HeaderRowTag + " " + config.HeaderRowFieldAttr + "=" +
 				config.EncloseBy + asString + config.EncloseBy +
-				" " + config.headerRowFieldTypeAttr + "=" + "\"" + headerRowFieldTypes[j] + "\"" +
-				"/" + /*config.headerRowTag +*/ ">"
+				" " + config.HeaderRowFieldTypeAttr + "=" + "\"" + headerRowFieldTypes[j] + "\"" +
+				"/" + /*config.HeaderRowTag +*/ ">"
 			//TODO additional config
 		}
 
@@ -322,9 +322,9 @@ func (w *writer) writeRegularHeaderObject(data []string, wasStrings []bool, head
 		w.buffer.writeString(w.beforeFirst) // TODO w.beforeFirst [[??
 	}
 
-	w.buffer.writeString(w.config.newLine + "<" + w.config.headerTag + ">")
+	w.buffer.writeString(w.config.NewLine + "<" + w.config.HeaderTag + ">")
 	WriteRegularHeaderObject(w.buffer, w.config, data, wasStrings, headerRowFieldTypes)
-	w.buffer.writeString(w.config.newLine + "</" + w.config.headerTag + ">")
+	w.buffer.writeString(w.config.NewLine + "</" + w.config.HeaderTag + ">")
 	w.writtenObject = true
 }
 
@@ -369,7 +369,7 @@ func (a *Accessor) RegularHeaders() ([]string, []string) {
 			headers[i] = field.name
 		}
 
-		//rowFieldType, ok = a.config.headerRowFieldType[field.xField.Type.String()]
+		//rowFieldType, ok = a.config.HeaderRowFieldType[field.xField.Type.String()]
 		//if ok {
 		//	headerRowFieldTypes[i] = rowFieldType
 		//} else {
@@ -541,11 +541,11 @@ func (a *Accessor) stringifyRegularFields(writer *writer, headers *[]string, att
 			fieldNames[i+sliceOffset] = field.name
 		}
 
-		//rowFieldType, ok = a.config.dataRowFieldTypes[types[i]]
+		//rowFieldType, ok = a.config.DataRowFieldTypes[types[i]]
 		//if ok {
-		//	dataRowFieldTypes[i] = rowFieldType
+		//	DataRowFieldTypes[i] = rowFieldType
 		//} else {
-		//	dataRowFieldTypes[i] = "TYPE_ERR"
+		//	DataRowFieldTypes[i] = "TYPE_ERR"
 		//}
 
 	}

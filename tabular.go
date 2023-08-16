@@ -7,16 +7,16 @@ import (
 
 func (w *writer) writeTabularAllObjects(acc *Accessor, parentLevel bool) {
 
-	if w.config.style != tabularStyle {
+	if w.config.Style != tabularStyle {
 		//TODO MFI
 	}
 	/*
-		w.buffer.writeString("<" + w.config.rootTag + ">") // TODO MFI
-		defer w.buffer.writeString(w.config.newLine + "</" + w.config.rootTag + ">")
+		w.buffer.writeString("<" + w.config.RootTag + ">") // TODO MFI
+		defer w.buffer.writeString(w.config.NewLine + "</" + w.config.RootTag + ">")
 	*/
 	//TODO use acc config not writer config (can be the same but not always)
-	w.buffer.writeString("<" + acc.config.rootTag + ">") // TODO MFI
-	defer w.buffer.writeString(acc.config.newLine + "</" + acc.config.rootTag + ">")
+	w.buffer.writeString("<" + acc.config.RootTag + ">") // TODO MFI
+	defer w.buffer.writeString(acc.config.NewLine + "</" + acc.config.RootTag + ">")
 
 	w.writeHeadersIfNeeded(acc.Headers())
 
@@ -25,12 +25,12 @@ func (w *writer) writeTabularAllObjects(acc *Accessor, parentLevel bool) {
 	//fmt.Printf("\n*** SIZE = %d ***\n", w.size) // TODO check sizes
 
 	/*
-		w.buffer.writeString(w.config.newLine + "<" + w.config.dataTag + ">")
-		defer w.buffer.writeString(w.config.newLine + "</" + w.config.dataTag + ">")
+		w.buffer.writeString(w.config.NewLine + "<" + w.config.DataTag + ">")
+		defer w.buffer.writeString(w.config.NewLine + "</" + w.config.DataTag + ">")
 	*/
 	//TODO use acc config not writer config
-	w.buffer.writeString(acc.config.newLine + "<" + acc.config.dataTag + ">")
-	defer w.buffer.writeString(acc.config.newLine + "</" + acc.config.dataTag + ">")
+	w.buffer.writeString(acc.config.NewLine + "<" + acc.config.DataTag + ">")
+	defer w.buffer.writeString(acc.config.NewLine + "</" + acc.config.DataTag + ">")
 
 	for i := 0; i < w.size; i++ {
 		acc.ResetAllChildren()
@@ -58,10 +58,10 @@ func (w *writer) writeTabularAllObjects(acc *Accessor, parentLevel bool) {
 		for acc.Has() {
 			//w.buffer.writeString(w.config.FieldSeparator)
 			//w.buffer.writeString("#")
-			//w.buffer.writeString(w.config.newLine) // TODO MFI use for test formatting only
+			//w.buffer.writeString(w.config.NewLine) // TODO MFI use for test formatting only
 
 			//w.buffer.writeString("[")
-			//w.buffer.writeString(w.config.newLine + "<" + w.config.dataRowTag + ">")
+			//w.buffer.writeString(w.config.NewLine + "<" + w.config.DataRowTag + ">")
 
 			result, wasStrings, types, dataRowFieldTypes := acc.stringifyFields(w)
 			w.writeTabularObject(result, wasStrings, types, dataRowFieldTypes)
@@ -86,7 +86,7 @@ func (w *writer) writeTabularAllObjects(acc *Accessor, parentLevel bool) {
 			//}
 
 			//w.buffer.writeString("]")
-			//w.buffer.writeString("</" + w.config.dataRowTag + ">")
+			//w.buffer.writeString("</" + w.config.DataRowTag + ">")
 		}
 	}
 }
@@ -96,7 +96,7 @@ func WriteTabularObject(writer *Buffer, config *Config, values []string, wasStri
 		return
 	}
 
-	writer.writeString(config.newLine + "<" + config.dataRowTag + ">")
+	writer.writeString(config.NewLine + "<" + config.DataRowTag + ">")
 	escapedNullValue := EscapeSpecialChars(config.NullValue, config)
 
 	for j := 0; j < len(values); j++ {
@@ -108,8 +108,8 @@ func WriteTabularObject(writer *Buffer, config *Config, values []string, wasStri
 		asString := EscapeSpecialChars(values[j], config) //TODO MFI escaping
 
 		if asString == escapedNullValue {
-			asString = config.nullValueTODO
-			asString = config.newLine + "<" + config.dataRowFieldTag +
+			asString = config.NullValueTODO
+			asString = config.NewLine + "<" + config.DataRowFieldTag +
 				" " + asString +
 				"/>"
 			writer.writeString(asString)
@@ -122,21 +122,21 @@ func WriteTabularObject(writer *Buffer, config *Config, values []string, wasStri
 
 		///////////
 		if dataType != "string" {
-			asString = config.newLine + "<" + config.dataRowFieldTag +
+			asString = config.NewLine + "<" + config.DataRowFieldTag +
 				" " + dataType + "=" +
 				config.EncloseBy + asString + config.EncloseBy +
 				"/>"
 		} else {
-			asString = config.newLine + "<" + config.dataRowFieldTag + ">" +
+			asString = config.NewLine + "<" + config.DataRowFieldTag + ">" +
 				asString +
-				"</" + config.dataRowFieldTag + ">"
+				"</" + config.DataRowFieldTag + ">"
 		}
 		///////////
 
 		writer.writeString(asString)
 	}
 
-	writer.writeString(config.newLine + "</" + config.dataRowTag + ">")
+	writer.writeString(config.NewLine + "</" + config.DataRowTag + ">")
 	//writer.writeString("]")
 
 }
@@ -155,10 +155,10 @@ func WriteTabularHeaderObject(writer *Buffer, config *Config, values []string, w
 
 		asString := EscapeSpecialChars(values[j], config) //TODO MFI escaping
 		if wasString[j] {
-			asString = config.newLine + "<" + config.headerRowTag + " " + config.headerRowFieldAttr + "=" +
+			asString = config.NewLine + "<" + config.HeaderRowTag + " " + config.HeaderRowFieldAttr + "=" +
 				config.EncloseBy + asString + config.EncloseBy +
-				" " + config.headerRowFieldTypeAttr + "=" + "\"" + headerRowFieldTypes[j] + "\"" +
-				"/" + /*config.headerRowTag +*/ ">"
+				" " + config.HeaderRowFieldTypeAttr + "=" + "\"" + headerRowFieldTypes[j] + "\"" +
+				"/" + /*config.HeaderRowTag +*/ ">"
 			//TODO additional config
 		}
 
@@ -176,9 +176,9 @@ func (w *writer) writeTabularHeaderObject(data []string, wasStrings []bool, head
 		w.buffer.writeString(w.beforeFirst) // TODO w.beforeFirst [[??
 	}
 
-	w.buffer.writeString(w.config.newLine + "<" + w.config.headerTag + ">")
+	w.buffer.writeString(w.config.NewLine + "<" + w.config.HeaderTag + ">")
 	WriteTabularHeaderObject(w.buffer, w.config, data, wasStrings, headerRowFieldTypes)
-	w.buffer.writeString(w.config.newLine + "</" + w.config.headerTag + ">")
+	w.buffer.writeString(w.config.NewLine + "</" + w.config.HeaderTag + ">")
 	w.writtenObject = true
 }
 

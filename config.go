@@ -11,20 +11,20 @@ const tabularStyle = "tabularStyle"
 
 type (
 	Config struct {
-		style string
+		Style string
 		// TODO MFI move below to another config
-		rootTag                string
-		headerTag              string
-		headerRowTag           string
-		headerRowFieldAttr     string
-		headerRowFieldTypeAttr string
-		headerRowFieldType     map[string]string
-		dataTag                string
-		dataRowTag             string
-		dataRowFieldTag        string
-		dataRowFieldTypes      map[string]string
-		nullValueTODO          string
-		newLine                string
+		RootTag                string
+		HeaderTag              string
+		HeaderRowTag           string
+		HeaderRowFieldAttr     string
+		HeaderRowFieldTypeAttr string
+		HeaderRowFieldType     map[string]string
+		DataTag                string
+		DataRowTag             string
+		DataRowFieldTag        string
+		DataRowFieldTypes      map[string]string
+		NullValueTODO          string
+		NewLine                string
 		////
 		regularRootTag string
 		regularRowTag  string
@@ -84,11 +84,11 @@ func (c *Config) init() (map[string]bool, error) {
 		excluded[path] = true
 	}
 
-	if c.style == "" { //TODO MFI
-		c.style = regularStyle
+	if c.Style == "" { //TODO MFI
+		c.Style = regularStyle
 	}
 
-	if c.style == tabularStyle {
+	if c.Style == tabularStyle {
 		if err := c.initTabular(); err != nil {
 			return nil, err
 		}
@@ -100,31 +100,31 @@ func (c *Config) initTabular() error {
 
 	// TODO move config to test or crate default
 	///
-	//if c.dataRowFieldTypes == nil {
-	//	c.dataRowFieldTypes = make(map[string]string)
+	//if c.DataRowFieldTypes == nil {
+	//	c.DataRowFieldTypes = make(map[string]string)
 	//
 	//	//TODO MFI move to init
-	//	c.dataRowFieldTypes["int"] = "lg"
-	//	c.dataRowFieldTypes["*int"] = "lg"
-	//	c.dataRowFieldTypes["time.Time"] = "dt"
-	//	c.dataRowFieldTypes["string"] = "string"
+	//	c.DataRowFieldTypes["int"] = "lg"
+	//	c.DataRowFieldTypes["*int"] = "lg"
+	//	c.DataRowFieldTypes["time.Time"] = "dt"
+	//	c.DataRowFieldTypes["string"] = "string"
 	//}
 	//
-	//if c.headerRowFieldType == nil {
-	//	c.headerRowFieldType = make(map[string]string)
+	//if c.HeaderRowFieldType == nil {
+	//	c.HeaderRowFieldType = make(map[string]string)
 	//
 	//	//TODO MFI move to init
-	//	c.headerRowFieldType["int"] = "long"
-	//	c.headerRowFieldType["time.Time"] = "date"
-	//	c.headerRowFieldType["string"] = "string"
+	//	c.HeaderRowFieldType["int"] = "long"
+	//	c.HeaderRowFieldType["time.Time"] = "date"
+	//	c.HeaderRowFieldType["string"] = "string"
 	//}
 	///
 
-	if c.dataRowFieldTypes == nil {
+	if c.DataRowFieldTypes == nil {
 		return fmt.Errorf("data row fields types expected for %s", tabularStyle)
 	}
 
-	if c.headerRowFieldType == nil {
+	if c.HeaderRowFieldType == nil {
 		return fmt.Errorf("header row fields types expected for %s", tabularStyle)
 	}
 

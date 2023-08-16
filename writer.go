@@ -66,7 +66,7 @@ func (w *writer) writeAllObjectsOld(acc *Accessor, parentLevel bool) {
 		for acc.Has() {
 			w.buffer.writeString(w.config.FieldSeparator)
 			//w.buffer.writeString("#")
-			//w.buffer.writeString(w.config.newLine) // TODO MFI use for test formatting only
+			//w.buffer.writeString(w.config.NewLine) // TODO MFI use for test formatting only
 			w.buffer.writeString("[")
 
 			result, wasStrings, _, _ := acc.stringifyFields(w)

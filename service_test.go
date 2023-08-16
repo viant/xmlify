@@ -1080,17 +1080,17 @@ func parseTime(format, timeStr string) time.Time {
 
 func getTabularConfig() *Config {
 	return &Config{
-		style:                  "tabularStyle", // style
-		rootTag:                "result",
-		headerTag:              "columns",
-		headerRowTag:           "column",
-		headerRowFieldAttr:     "id",
-		headerRowFieldTypeAttr: "type",
-		dataTag:                "rows",
-		dataRowTag:             "r",
-		dataRowFieldTag:        "c",
-		newLine:                "\n",
-		dataRowFieldTypes: map[string]string{
+		Style:                  "tabularStyle", // Style
+		RootTag:                "result",
+		HeaderTag:              "columns",
+		HeaderRowTag:           "column",
+		HeaderRowFieldAttr:     "id",
+		HeaderRowFieldTypeAttr: "type",
+		DataTag:                "rows",
+		DataRowTag:             "r",
+		DataRowFieldTag:        "c",
+		NewLine:                "\n",
+		DataRowFieldTypes: map[string]string{
 			"uint":    "lg",
 			"uint8":   "lg",
 			"uint16":  "lg",
@@ -1121,7 +1121,7 @@ func getTabularConfig() *Config {
 			"time.Time":  "dt",
 			"*time.Time": "dt",
 		},
-		headerRowFieldType: map[string]string{
+		HeaderRowFieldType: map[string]string{
 			"uint":    "long",
 			"uint8":   "long",
 			"uint16":  "long",
@@ -1152,23 +1152,23 @@ func getTabularConfig() *Config {
 			"time.Time":  "date",
 			"*time.Time": "date",
 		},
-		nullValueTODO: "nil=\"true\"", //TODO MFI
+		NullValueTODO: "nil=\"true\"", //TODO MFI
 	}
 }
 
 func getRegularConfig() *Config {
 	return &Config{
-		style: "regularStyle", // style
-		//rootTag:                "result",
-		//headerTag:              "columns",
-		//headerRowTag:           "column",
-		//headerRowFieldAttr:     "id",
-		//headerRowFieldTypeAttr: "type",
-		//dataTag:                "rows",
-		//dataRowTag:             "r",
-		//dataRowFieldTag:        "c",
-		newLine: "\n",
-		dataRowFieldTypes: map[string]string{
+		Style: "regularStyle", // Style
+		//RootTag:                "result",
+		//HeaderTag:              "columns",
+		//HeaderRowTag:           "column",
+		//HeaderRowFieldAttr:     "id",
+		//HeaderRowFieldTypeAttr: "type",
+		//DataTag:                "rows",
+		//DataRowTag:             "r",
+		//DataRowFieldTag:        "c",
+		NewLine: "\n",
+		DataRowFieldTypes: map[string]string{
 			"uint":    "lg",
 			"uint8":   "lg",
 			"uint16":  "lg",
@@ -1199,7 +1199,7 @@ func getRegularConfig() *Config {
 			"time.Time":  "dt",
 			"*time.Time": "dt",
 		},
-		headerRowFieldType: map[string]string{
+		HeaderRowFieldType: map[string]string{
 			"uint":    "long",
 			"uint8":   "long",
 			"uint16":  "long",
@@ -1230,7 +1230,7 @@ func getRegularConfig() *Config {
 			"time.Time":  "date",
 			"*time.Time": "date",
 		},
-		nullValueTODO:  "nil=\"true\"", //TODO MFI
+		NullValueTODO:  "nil=\"true\"", //TODO MFI
 		regularRootTag: "root",
 		regularRowTag:  "row",
 	}
@@ -1238,17 +1238,17 @@ func getRegularConfig() *Config {
 
 func getMixedConfig() *Config {
 	return &Config{
-		style:                  "regularStyle", // style
-		rootTag:                "result",
-		headerTag:              "columns",
-		headerRowTag:           "column",
-		headerRowFieldAttr:     "id",
-		headerRowFieldTypeAttr: "type",
-		dataTag:                "rows",
-		dataRowTag:             "r",
-		dataRowFieldTag:        "c",
-		newLine:                "\n",
-		dataRowFieldTypes: map[string]string{
+		Style:                  "regularStyle", // Style
+		RootTag:                "result",
+		HeaderTag:              "columns",
+		HeaderRowTag:           "column",
+		HeaderRowFieldAttr:     "id",
+		HeaderRowFieldTypeAttr: "type",
+		DataTag:                "rows",
+		DataRowTag:             "r",
+		DataRowFieldTag:        "c",
+		NewLine:                "\n",
+		DataRowFieldTypes: map[string]string{
 			"uint":    "lg",
 			"uint8":   "lg",
 			"uint16":  "lg",
@@ -1279,7 +1279,7 @@ func getMixedConfig() *Config {
 			"time.Time":  "dt",
 			"*time.Time": "dt",
 		},
-		headerRowFieldType: map[string]string{
+		HeaderRowFieldType: map[string]string{
 			"uint":    "long",
 			"uint8":   "long",
 			"uint16":  "long",
@@ -1310,7 +1310,7 @@ func getMixedConfig() *Config {
 			"time.Time":  "date",
 			"*time.Time": "date",
 		},
-		nullValueTODO:  "nil=\"true\"", //TODO MFI
+		NullValueTODO:  "nil=\"true\"", //TODO MFI
 		regularRootTag: "root",
 		regularRowTag:  "row",
 	}
