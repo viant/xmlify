@@ -23,11 +23,12 @@ type (
 		DataRowTag             string
 		DataRowFieldTag        string
 		DataRowFieldTypes      map[string]string
-		NullValueTODO          string
+		TabularNullValue       string
 		NewLine                string
 		////
-		RegularRootTag string
-		RegularRowTag  string
+		RegularRootTag   string
+		RegularRowTag    string
+		RegularNullValue string
 		// TODO map of types for header and data
 		FieldSeparator    string
 		ObjectSeparator   string

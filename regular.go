@@ -171,15 +171,11 @@ func (w *writer) writeRegularAllObjects(acc *Accessor, parentLevel bool) {
 						w.writeRegularAllObjects(child, false)
 						w.size = tmpSize
 					}
-
-					if childSize == 0 {
-						w.buffer.writeString("null")
-					}
 				}
 			}
 
 			if fieldKind == reflect.Slice || acc.slice != nil {
-				w.buffer.writeString(w.config.NewLine + "</" + rowFieldName + ">") //TODO MFI defer
+				w.buffer.writeString(w.config.NewLine + "</" + rowFieldName + ">")
 			}
 
 		} // ~ has loop
@@ -191,6 +187,7 @@ func WriteRegularObject(writer *Buffer, config *Config, values []string, wasStri
 		return
 	}
 
+	// TODO MOVE to config
 	escapedNullValue := EscapeSpecialChars(config.NullValue, config)
 
 	for j := 0; j < len(values); j++ {
@@ -198,43 +195,27 @@ func WriteRegularObject(writer *Buffer, config *Config, values []string, wasStri
 			continue
 		}
 
-		//if j != 0 {
-		//	writer.writeString(config.FieldSeparator) //TODO MFI field separtator always
-		//}
-
-		asString := EscapeSpecialChars(values[j], config) //TODO MFI escaping
+		asString := EscapeSpecialChars(values[j], config)
 
 		if asString == escapedNullValue {
-			asString = config.NullValueTODO
-			asString = config.NewLine + "<" + headers[j] +
-				" " + asString +
-				"/>"
+			if config.RegularNullValue == "" {
+				asString = config.NewLine + "<" + headers[j] + "/>"
+			} else {
+				asString = config.NewLine + "<" + headers[j] +
+					" " + config.RegularNullValue +
+					"/>"
+
+			}
 			writer.writeString(asString)
 			continue
 		}
 
-		// if wasString[j] { every value has to be string
-
-		//dataType := DataRowFieldTypes[j]
-
-		///////////
-		//if dataType != "string" {
-		//	asString = config.NewLine + "<" + headers[j] +
-		//		" " + dataType + "=" +
-		//		config.EncloseBy + asString + config.EncloseBy +
-		//		"/>"
-		//} else {
 		asString = config.NewLine + "<" + headers[j] + ">" +
 			asString +
 			"</" + headers[j] + ">"
-		//}
-		///////////
 
 		writer.writeString(asString)
 	}
-
-	//writer.writeString("]")
-
 }
 
 func WriteRegularObjectAttr(writer *Buffer, config *Config, values []string, wasString []bool, types []string, dataRowFieldTypes []string, headers []string, shouldWrite []bool) {
@@ -271,7 +252,7 @@ func WriteRegularObjectAttr(writer *Buffer, config *Config, values []string, was
 		lastAttr = currentAttr
 
 		if asString == escapedNullValue {
-			asString = config.NullValueTODO
+			asString = config.RegularNullValue
 			writer.writeString(asString)
 			continue
 		}

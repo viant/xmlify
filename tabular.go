@@ -100,27 +100,23 @@ func WriteTabularObject(writer *Buffer, config *Config, values []string, wasStri
 	escapedNullValue := EscapeSpecialChars(config.NullValue, config)
 
 	for j := 0; j < len(values); j++ {
-
-		//if j != 0 {
-		//	writer.writeString(config.FieldSeparator) //TODO MFI field separtator always
-		//}
-
 		asString := EscapeSpecialChars(values[j], config) //TODO MFI escaping
 
 		if asString == escapedNullValue {
-			asString = config.NullValueTODO
-			asString = config.NewLine + "<" + config.DataRowFieldTag +
-				" " + asString +
-				"/>"
+			if config.TabularNullValue == "" {
+				asString = config.NewLine + "<" + config.DataRowFieldTag + "/>"
+			} else {
+				asString = config.NewLine + "<" + config.DataRowFieldTag +
+					" " + config.TabularNullValue +
+					"/>"
+			}
+
 			writer.writeString(asString)
 			continue
 		}
 
-		// if wasString[j] { every value has to be string
-
 		dataType := dataRowFieldTypes[j]
 
-		///////////
 		if dataType != "string" {
 			asString = config.NewLine + "<" + config.DataRowFieldTag +
 				" " + dataType + "=" +
@@ -131,14 +127,11 @@ func WriteTabularObject(writer *Buffer, config *Config, values []string, wasStri
 				asString +
 				"</" + config.DataRowFieldTag + ">"
 		}
-		///////////
 
 		writer.writeString(asString)
 	}
 
 	writer.writeString(config.NewLine + "</" + config.DataRowTag + ">")
-	//writer.writeString("]")
-
 }
 
 func WriteTabularHeaderObject(writer *Buffer, config *Config, values []string, wasString []bool, headerRowFieldTypes []string) {

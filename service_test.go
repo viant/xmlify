@@ -94,6 +94,118 @@ func Test_RegularXML_TODO_NOT_PASSED_Marshal(t *testing.T) {
 	}
 }
 
+func Test_RegularXMLTest067_Marshal(t *testing.T) {
+
+	type Products struct {
+		Id          int        `sqlx:"name=ID" velty:"names=ID|Id"`
+		Name        *string    `sqlx:"name=NAME" velty:"names=NAME|Name"`
+		VendorId    *int       `sqlx:"name=VENDOR_ID" velty:"names=VENDOR_ID|VendorId"`
+		Status      *int       `sqlx:"name=STATUS" velty:"names=STATUS|Status"`
+		Created     *time.Time `sqlx:"name=CREATED" velty:"names=CREATED|Created"`
+		UserCreated *int       `sqlx:"name=USER_CREATED" velty:"names=USER_CREATED|UserCreated"`
+		Updated     *time.Time `sqlx:"name=UPDATED" velty:"names=UPDATED|Updated"`
+		UserUpdated *int       `sqlx:"name=USER_UPDATED" velty:"names=USER_UPDATED|UserUpdated"`
+	}
+
+	type Vendor struct {
+		Id          int        `sqlx:"name=ID" velty:"names=ID|Id"`
+		Name        *string    `sqlx:"name=NAME" velty:"names=NAME|Name"`
+		AccountId   *int       `sqlx:"name=ACCOUNT_ID" velty:"names=ACCOUNT_ID|AccountId"`
+		Created     *time.Time `sqlx:"name=CREATED" velty:"names=CREATED|Created"`
+		UserCreated *int       `sqlx:"name=USER_CREATED" velty:"names=USER_CREATED|UserCreated"`
+		Updated     *time.Time `sqlx:"name=UPDATED" velty:"names=UPDATED|Updated"`
+		UserUpdated *int       `sqlx:"name=USER_UPDATED" velty:"names=USER_UPDATED|UserUpdated"`
+		Products    []*Products
+	}
+
+	var testCases = []struct {
+		description   string
+		rType         reflect.Type
+		input         interface{}
+		expected      string
+		config        *Config
+		depthsConfigs []*Config
+		useAssertPkg  bool
+	}{
+		{
+			description: "01 response ver. 01",
+			rType:       reflect.TypeOf(Vendor{}),
+			input: Vendor{
+				Id:          0,
+				Name:        nil,
+				AccountId:   nil,
+				Created:     nil,
+				UserCreated: nil,
+				Updated:     nil,
+				UserUpdated: nil,
+				Products:    nil,
+			},
+
+			expected: `<?xml version="1.0" encoding="UTF-8" ?>
+<root>
+<request>
+<query_string>views=TOTAL&amp;amp;from=2023-08-06&amp;amp;to</query_string>
+<timestamp>2023-08023</timestamp>
+<viewId>total</viewId>
+</request>
+<result>
+<avails>2476852</avails>
+<clearingPrice>0.43943723015873004</clearingPrice>
+<finalHhUniqsV1>37500</finalHhUniqsV1>
+<uniqs>520000</uniqs>
+</result>
+<sql>werwerewrew
+</sql>
+<filter>
+<providerTaxonomy>
+<include-ids>1</include-ids>
+<include-ids>2</include-ids>
+</providerTaxonomy>
+</filter>
+</root>`,
+			config:        getMixedConfig(), //getRegularConfig(),
+			depthsConfigs: []*Config{getTabularConfig(), getTabularConfig(), getTabularConfig()},
+			useAssertPkg:  false,
+		},
+	}
+	for _, testCase := range testCases {
+
+		if testCase.rType == nil {
+			fn, ok := (testCase.input).(func() interface{})
+			assert.True(t, ok, testCase.description)
+
+			testCase.input = fn()
+			testCase.rType = reflect.TypeOf(testCase.input)
+			if testCase.rType.Kind() == reflect.Slice {
+				testCase.rType = testCase.rType.Elem()
+			}
+		}
+
+		marshaller, err := NewMarshaller(testCase.rType, testCase.config)
+		if !assert.Nil(t, err, testCase.description) {
+			continue
+		}
+
+		marshal, err := marshaller.Marshal(testCase.input, testCase.depthsConfigs)
+		if !assert.Nil(t, err, testCase.description) {
+			continue
+		}
+
+		if !assert.Nil(t, err, testCase.description) {
+			continue
+		}
+
+		actual := string(marshal)
+
+		if testCase.useAssertPkg {
+			assert.EqualValues(t, testCase.expected, actual)
+			continue
+		}
+
+		assertly.AssertValues(t, testCase.expected, actual, testCase.description)
+	}
+}
+
 func Test_RegularXML_Attributes_Marshal(t *testing.T) {
 
 	type Example01 struct {
@@ -766,6 +878,23 @@ func Test_RegularXML_Marshal(t *testing.T) {
 			config:       getRegularConfig(),
 			useAssertPkg: false,
 		},
+		{
+			description: "15 nested struct with nil slice - no root element",
+			rType:       reflect.TypeOf(Example06{}),
+			input: Example06{
+				Foo: &Foo{
+					FooId:   1,
+					Entries: nil,
+				},
+			},
+			expected: `<?xml version="1.0" encoding="UTF-8" ?>
+<Foo>
+<FooId>1</FooId>
+</Foo>
+`,
+			config:       getRegularConfig(),
+			useAssertPkg: false,
+		},
 	}
 	for _, testCase := range testCases {
 		//for _, testCase := range testCases[len(testCases)-1:] {
@@ -1152,7 +1281,7 @@ func getTabularConfig() *Config {
 			"time.Time":  "date",
 			"*time.Time": "date",
 		},
-		NullValueTODO: "nil=\"true\"", //TODO MFI
+		TabularNullValue: "nil=\"true\"", //TODO MFI
 	}
 }
 
@@ -1230,9 +1359,9 @@ func getRegularConfig() *Config {
 			"time.Time":  "date",
 			"*time.Time": "date",
 		},
-		NullValueTODO:  "nil=\"true\"", //TODO MFI
-		RegularRootTag: "root",
-		RegularRowTag:  "row",
+		TabularNullValue: "nil=\"true\"", //TODO MFI
+		RegularRootTag:   "root",
+		RegularRowTag:    "row",
 	}
 }
 
@@ -1310,8 +1439,9 @@ func getMixedConfig() *Config {
 			"time.Time":  "date",
 			"*time.Time": "date",
 		},
-		NullValueTODO:  "nil=\"true\"", //TODO MFI
-		RegularRootTag: "root",
-		RegularRowTag:  "row",
+		TabularNullValue: "nil=\"true\"", //TODO MFI
+		RegularRootTag:   "root",
+		RegularRowTag:    "row",
+		RegularNullValue: "",
 	}
 }
