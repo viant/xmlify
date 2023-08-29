@@ -102,8 +102,6 @@ func WriteObject(writer *Buffer, config *Config, values []string, wasString []bo
 		return
 	}
 
-	//writer.writeString("[")
-
 	for j := 0; j < len(values); j++ {
 		if j != 0 {
 			writer.writeString(config.FieldSeparator) //TODO MFI field separtator always
@@ -116,9 +114,6 @@ func WriteObject(writer *Buffer, config *Config, values []string, wasString []bo
 
 		writer.writeString(asString)
 	}
-
-	//writer.writeString("]")
-
 }
 
 func EscapeSpecialChars(value string, config *Config) string {

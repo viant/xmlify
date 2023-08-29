@@ -344,7 +344,7 @@ func Test_RegularXML_Response_Marshal(t *testing.T) {
 
 	type Response struct {
 		Request *Request `xmlify:"name=request"`
-		Result  *Result  `xmlify:"name=result"`
+		Result  *Result  `xmlify:"name=result,tabular", `
 		Sql     string   `xmlify:"name=sql"`
 		Filter  *Filter  `xmlify:"name=filter"`
 	}
@@ -411,10 +411,20 @@ func Test_RegularXML_Response_Marshal(t *testing.T) {
 <viewId>total</viewId>
 </request>
 <result>
-<avails>2476852</avails>
-<clearingPrice>0.43943723015873004</clearingPrice>
-<finalHhUniqsV1>37500</finalHhUniqsV1>
-<uniqs>520000</uniqs>
+<columns>
+<column id="avails" type="long"/>
+<column id="clearingPrice" type="double"/>
+<column id="finalHhUniqsV1" type="long"/>
+<column id="uniqs" type="long"/>
+</columns>
+<rows>
+<r>
+<c lg="2476852"/>
+<c db="0.43943723015873004"/>
+<c lg="37500"/>
+<c lg="520000"/>
+</r>
+</rows>
 </result>
 <sql>werwerewrew
 </sql>
@@ -1218,7 +1228,7 @@ func getTabularConfig() *Config {
 		DataTag:                "rows",
 		DataRowTag:             "r",
 		DataRowFieldTag:        "c",
-		NewLine:                "\n",
+		NewLineSeparator:       "\n",
 		DataRowFieldTypes: map[string]string{
 			"uint":    "lg",
 			"uint8":   "lg",
@@ -1296,7 +1306,7 @@ func getRegularConfig() *Config {
 		//DataTag:                "rows",
 		//DataRowTag:             "r",
 		//DataRowFieldTag:        "c",
-		NewLine: "\n",
+		NewLineSeparator: "\n",
 		DataRowFieldTypes: map[string]string{
 			"uint":    "lg",
 			"uint8":   "lg",
@@ -1376,7 +1386,7 @@ func getMixedConfig() *Config {
 		DataTag:                "rows",
 		DataRowTag:             "r",
 		DataRowFieldTag:        "c",
-		NewLine:                "\n",
+		NewLineSeparator:       "\n",
 		DataRowFieldTypes: map[string]string{
 			"uint":    "lg",
 			"uint8":   "lg",

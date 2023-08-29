@@ -26,102 +26,7 @@ func (s *UnmarshalSession) init(fields []*Field, refs map[string][]string, acces
 		object.AddHolder(field, &s.buffer[i])
 	}
 
-	// TODO ensure parent Object
-	found := false
-	for _, o := range s.objects {
-		if o.parentID == nil {
-			found = true
-			break
-		}
-	}
-
-	if !found {
-		o := &Object{
-			stringifier: nil, //stringifiers[field.parentType],
-			objType:     nil, //???   field.parentType,
-			path:        "",  //   field.path,
-			parentID:    nil, //  asInterface(field.path, parentID),
-			dest:        nil, // dest,
-			appender:    nil, // appender,
-			index: &Index{
-				positionInSlice: map[interface{}]int{},
-				data:            nil,
-				objectIndex:     ObjectIndex{},
-				appenders:       map[interface{}]*xunsafe.Appender{},
-			},
-			xField: nil,
-			xSlice: nil,
-			holder: "",
-		}
-		s.objects = append(s.objects, o)
-
-		//o2 := &Object{
-		//	stringifier: nil,    //stringifiers[field.parentType],
-		//	objType:     nil,    //???   field.parentType,
-		//	path:        "Race", //   field.path,
-		//	parentID:    "",     //  asInterface(field.path, parentID),
-		//	dest:        nil,    // dest,
-		//	appender:    nil,    // appender,
-		//	index: &Index{
-		//		positionInSlice: map[interface{}]int{},
-		//		data:            nil,
-		//		objectIndex:     ObjectIndex{},
-		//		appenders:       map[interface{}]*xunsafe.Appender{},
-		//	},
-		//	xField: nil,
-		//	xSlice: nil,
-		//	holder: "",
-		//}
-		//s.objects = append(s.objects, o2)
-	}
-
-	///////////////
-	//index := map[interface{}]int{}
-	//
-	//for i, node := range s.objects {
-	//	id := node.ID()
-	//	if id == nil { //TODO MFI how it's possible that id == nil ??? it means path == nil
-	//		continue
-	//	}
-	//	index[id] = i
-	//}
-
-	//for i := 0; i < len(s.objects); i++ {
-	//	node := s.objects[i]
-	//	if node.ParentID() == nil {
-	//		continue
-	//	}
-	//
-	//	_, ok := index[node.ParentID()]
-	//	if i > 5 {
-	//		break
-	//	}
-	//
-	//	if !ok {
-	//		//////////
-	//		o := &Object{
-	//			stringifier: nil, //stringifiers[field.parentType],
-	//			objType:     nil, //???   field.parentType,
-	//			path:        "",  //   field.path,
-	//			parentID:    nil, //  asInterface(field.path, parentID),
-	//			dest:        nil, // dest,
-	//			appender:    nil, // appender,
-	//			index: &Index{
-	//				positionInSlice: map[interface{}]int{},
-	//				data:            nil,
-	//				objectIndex:     ObjectIndex{},
-	//				appenders:       map[interface{}]*xunsafe.Appender{},
-	//			},
-	//			xField: nil,
-	//			xSlice: nil,
-	//			holder: "",
-	//		}
-	//		s.objects = append(s.objects, o)
-	//		//////////
-	//	}
-	//}
-
-	//////////////
+	s.ensureParentObject()
 	parentNode, ok := s.buildParentNode()
 	if !ok {
 		return fmt.Errorf("none of the parent fields were specified")
@@ -134,6 +39,37 @@ func (s *UnmarshalSession) init(fields []*Field, refs map[string][]string, acces
 
 	s.parentNode = anObject
 	return nil
+}
+
+func (s *UnmarshalSession) ensureParentObject() {
+	found := false
+	for _, o := range s.objects {
+		if o.parentID == nil {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		o := &Object{
+			stringifier: nil,
+			objType:     nil,
+			path:        "",
+			parentID:    nil,
+			dest:        nil,
+			appender:    nil,
+			index: &Index{
+				positionInSlice: map[interface{}]int{},
+				data:            nil,
+				objectIndex:     ObjectIndex{},
+				appenders:       map[interface{}]*xunsafe.Appender{},
+			},
+			xField: nil,
+			xSlice: nil,
+			holder: "",
+		}
+		s.objects = append(s.objects, o)
+	}
 }
 
 func (s *UnmarshalSession) getOrCreateObject(field *Field, refs map[string][]string, accessors map[string]*xunsafe.Field, stringifiers map[reflect.Type]*io.ObjectStringifier) *Object {

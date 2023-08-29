@@ -11,7 +11,7 @@ const tabularStyle = "tabularStyle"
 
 type (
 	Config struct {
-		Style string
+		Style string // TODO MFI delete style
 		// TODO MFI move below to another config
 		RootTag                string
 		HeaderTag              string
@@ -24,7 +24,7 @@ type (
 		DataRowFieldTag        string
 		DataRowFieldTypes      map[string]string
 		TabularNullValue       string
-		NewLine                string
+		NewLineSeparator       string
 		////
 		RegularRootTag   string
 		RegularRowTag    string
@@ -35,6 +35,7 @@ type (
 		EncloseBy         string
 		EscapeBy          string
 		NullValue         string
+		escapedNullValue  string
 		Stringify         StringifyConfig
 		UniqueFields      []string
 		References        []*Reference // parent -> children. Example02.ID -> Boo.FooId
@@ -68,8 +69,7 @@ func (c *Config) init() (map[string]bool, error) {
 	}
 
 	if c.NullValue == "" {
-		//c.NullValue = "null"
-		c.NullValue = "\u0000" //"\u001f" // or other sequence
+		c.NullValue = "\u0000"
 	}
 
 	if c.StringifierConfig.StringifierFloat32Config.Precision == "" {
@@ -79,6 +79,8 @@ func (c *Config) init() (map[string]bool, error) {
 	if c.StringifierConfig.StringifierFloat64Config.Precision == "" {
 		c.StringifierConfig.StringifierFloat64Config.Precision = "-1"
 	}
+
+	c.escapedNullValue = EscapeSpecialChars(c.NullValue, c) // TODO MOVE TO CONFIG
 
 	excluded := map[string]bool{}
 	for _, path := range c.ExcludedPaths {

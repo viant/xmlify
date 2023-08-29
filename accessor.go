@@ -2,10 +2,8 @@ package xmlify
 
 import (
 	io2 "github.com/viant/sqlx/io"
-	"strings"
-
-	//io2 "github.com/viant/sqlx/io"
 	"github.com/viant/xunsafe"
+	"strings"
 	"unsafe"
 )
 
@@ -24,7 +22,7 @@ type (
 		slicePtr       unsafe.Pointer
 		slice          *xunsafe.Slice
 
-		ptr      unsafe.Pointer // refering to a single object
+		ptr      unsafe.Pointer // referring to a single object
 		field    *xunsafe.Field // used to get value from parent pointer
 		fieldTag *Tag
 		holder   string
@@ -89,15 +87,9 @@ func (a *Accessor) Set(pointer unsafe.Pointer) {
 		if pointer == nil {
 			child.Set(nil)
 		} else {
-			if child.field == nil {
-				for _, child2 := range child.children {
-					child2.Set(pointer)
-				}
-			} else {
-				aPtr, slicePtr := a.getChildValue(pointer, child)
-				child.slicePtr = slicePtr
-				child.Set(aPtr)
-			}
+			aPtr, slicePtr := a.getChildValue(pointer, child)
+			child.slicePtr = slicePtr
+			child.Set(aPtr)
 		}
 
 		child.currSliceIndex = 0
@@ -127,11 +119,6 @@ func (a *Accessor) Headers() ([]string, []string) {
 	var ok bool
 
 	for i, field := range a.fields {
-		//tag := field.xField.Tag // TODO MFI TAG
-		//if tag != "" {
-		//	fmt.Printf(" %s tag = %s\n", field.name, tag)
-		//}
-		//	tag := field.xField.Type. //ParseTag(field.Tag.Get(option.TagSqlx))
 		if headers[i] = field.tag.Name; headers[i] == "" {
 			headers[i] = field.name
 		}
@@ -144,19 +131,6 @@ func (a *Accessor) Headers() ([]string, []string) {
 		}
 	}
 
-	/***
-		for _, child := range a.children {
-			//if child.config == nil {
-			//	childHeaders := child.Headers()
-			//	headers = append(headers, childHeaders...)
-			//} else {
-			//	headers = append(headers, child.holder)
-			//}
-			//headers = append(headers, child.holder)
-
-			headers = append(headers, child.field.Name)
-		}
-	***/
 	return headers, headerRowFieldTypes
 }
 
@@ -182,7 +156,7 @@ func (a *Accessor) stringifyFields(writer *writer) ([]string, []bool, []string, 
 	var rowFieldType string
 	var ok bool
 	for i, field := range a.fields {
-		result[i], wasStrings[i] = field.stringifier(a.ptr) //TODO how to get real type here?
+		result[i], wasStrings[i] = field.stringifier(a.ptr)
 		types[i] = field.xField.Type.String()
 
 		rowFieldType, ok = a.config.DataRowFieldTypes[types[i]]
@@ -274,7 +248,7 @@ func (a *Accessor) Interfacer() *xunsafe.Type {
 	return a.xType
 }
 
-func (a *Accessor) areAttributes() ([]bool, []string, bool) {
+func (a *Accessor) attributes() ([]bool, []string, bool) {
 	hasAttr := false
 	areAttr := make([]bool, len(a.fields))
 	names := make([]string, len(a.fields))

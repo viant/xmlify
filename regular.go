@@ -9,15 +9,12 @@ import (
 
 func (w *writer) writeRegularAllObjects(acc *Accessor, parentLevel bool) {
 
-	if w.config.Style != regularStyle {
-		//TODO MFI
-	}
-
 	if parentLevel {
 		w.buffer.writeString(`<?xml version="1.0" encoding="UTF-8" ?>`) // TODO add to config?
 	}
 
 	if acc.fieldTag != nil && acc.fieldTag.Tabular {
+		w.buffer.writeString(w.config.NewLineSeparator)
 		w.writeTabularAllObjects(acc, parentLevel)
 		return
 	}
@@ -27,7 +24,7 @@ func (w *writer) writeRegularAllObjects(acc *Accessor, parentLevel bool) {
 	var rowFieldName string
 
 	if acc.field != nil {
-		fieldName = acc.field.Name // TODO MFI parse tag and so on
+		fieldName = acc.field.Name
 		fieldKind = acc.field.Kind()
 	}
 
@@ -62,16 +59,16 @@ func (w *writer) writeRegularAllObjects(acc *Accessor, parentLevel bool) {
 		}
 	}
 
-	areAttributes, attrNames, containAttr := acc.areAttributes()
+	areAttributes, attrNames, containAttr := acc.attributes()
 
 	if !(parentLevel && omitRootElement) && fieldKind != reflect.Slice && fieldName != "" {
 		if containAttr {
-			w.buffer.writeString(w.config.NewLine + "<" + fieldName)
+			w.buffer.writeString(w.config.NewLineSeparator + "<" + fieldName)
 		} else {
-			w.buffer.writeString(w.config.NewLine + "<" + fieldName + ">")
+			w.buffer.writeString(w.config.NewLineSeparator + "<" + fieldName + ">")
 		}
 
-		defer w.buffer.writeString(w.config.NewLine + "</" + fieldName + ">")
+		defer w.buffer.writeString(w.config.NewLineSeparator + "</" + fieldName + ">")
 	}
 
 	headers, _ /*hTypes*/ := acc.RegularHeaders() //TODO rename
@@ -103,7 +100,7 @@ func (w *writer) writeRegularAllObjects(acc *Accessor, parentLevel bool) {
 			//len(field)< len(result) // when one of field is a slice !!!
 
 			if fieldKind == reflect.Slice || acc.slice != nil {
-				w.buffer.writeString(w.config.NewLine + "<" + rowFieldName + ">")
+				w.buffer.writeString(w.config.NewLineSeparator + "<" + rowFieldName + ">")
 			}
 
 			// writing fields one by one in correct order (field can be a slice or attribute)
@@ -154,9 +151,7 @@ func (w *writer) writeRegularAllObjects(acc *Accessor, parentLevel bool) {
 				end = upperBound[j]
 
 				if !areAttributes[start] && shouldWrite[start] { // whole result[start:end] represents one field (can be a slice)
-					// do all as usual
-					//TODO delete usnused arguments
-					w.writeRegularObject(result[start:end], wasStrings[start:end], types[start:end], []string{}, headers[start:end], shouldWrite[start:end])
+					w.writeRegularElement(result[start:end], headers[start:end], shouldWrite[start:end])
 				}
 
 				for _, child := range acc.children {
@@ -175,47 +170,11 @@ func (w *writer) writeRegularAllObjects(acc *Accessor, parentLevel bool) {
 			}
 
 			if fieldKind == reflect.Slice || acc.slice != nil {
-				w.buffer.writeString(w.config.NewLine + "</" + rowFieldName + ">")
+				w.buffer.writeString(w.config.NewLineSeparator + "</" + rowFieldName + ">")
 			}
 
 		} // ~ has loop
 	} // ~ main for loop
-}
-
-func WriteRegularObject(writer *Buffer, config *Config, values []string, wasString []bool, types []string, dataRowFieldTypes []string, headers []string, shouldWrite []bool) {
-	if len(values) == 0 {
-		return
-	}
-
-	// TODO MOVE to config
-	escapedNullValue := EscapeSpecialChars(config.NullValue, config)
-
-	for j := 0; j < len(values); j++ {
-		if !shouldWrite[j] {
-			continue
-		}
-
-		asString := EscapeSpecialChars(values[j], config)
-
-		if asString == escapedNullValue {
-			if config.RegularNullValue == "" {
-				asString = config.NewLine + "<" + headers[j] + "/>"
-			} else {
-				asString = config.NewLine + "<" + headers[j] +
-					" " + config.RegularNullValue +
-					"/>"
-
-			}
-			writer.writeString(asString)
-			continue
-		}
-
-		asString = config.NewLine + "<" + headers[j] + ">" +
-			asString +
-			"</" + headers[j] + ">"
-
-		writer.writeString(asString)
-	}
 }
 
 func WriteRegularObjectAttr(writer *Buffer, config *Config, values []string, wasString []bool, types []string, dataRowFieldTypes []string, headers []string, shouldWrite []bool) {
@@ -268,59 +227,6 @@ func WriteRegularObjectAttr(writer *Buffer, config *Config, values []string, was
 	//writer.writeString("]")
 }
 
-func WriteRegularHeaderObject(writer *Buffer, config *Config, values []string, wasString []bool, headerRowFieldTypes []string) {
-	if len(values) == 0 {
-		return
-	}
-
-	//writer.writeString("[")
-
-	for j := 0; j < len(values); j++ {
-		//if j != 0 {
-		//	writer.writeString(config.FieldSeparator) //TODO MFI field separtator always
-		//}
-
-		asString := EscapeSpecialChars(values[j], config) //TODO MFI escaping
-		if wasString[j] {
-			asString = config.NewLine + "<" + config.HeaderRowTag + " " + config.HeaderRowFieldAttr + "=" +
-				config.EncloseBy + asString + config.EncloseBy +
-				" " + config.HeaderRowFieldTypeAttr + "=" + "\"" + headerRowFieldTypes[j] + "\"" +
-				"/" + /*config.HeaderRowTag +*/ ">"
-			//TODO additional config
-		}
-
-		writer.writeString(asString)
-	}
-
-	//writer.writeString("]")
-
-}
-
-func (w *writer) writeRegularHeaderObject(data []string, wasStrings []bool, headerRowFieldTypes []string) {
-	if w.writtenObject {
-		//w.writeObjectSeparator()
-	} else {
-		w.buffer.writeString(w.beforeFirst) // TODO w.beforeFirst [[??
-	}
-
-	w.buffer.writeString(w.config.NewLine + "<" + w.config.HeaderTag + ">")
-	WriteRegularHeaderObject(w.buffer, w.config, data, wasStrings, headerRowFieldTypes)
-	w.buffer.writeString(w.config.NewLine + "</" + w.config.HeaderTag + ">")
-	w.writtenObject = true
-}
-
-func (w *writer) writeRegularObject(data []string, wasStrings []bool, types, dataRowFieldTypes []string, headers []string, shouldWrite []bool) {
-	if w.writtenObject {
-		//w.writeObjectSeparator()
-	} else {
-		w.buffer.writeString(w.beforeFirst) // TODO w.beforeFirst [[??
-	}
-
-	//WriteObject(w.buffer, w.config, data, wasStrings)
-	WriteRegularObject(w.buffer, w.config, data, wasStrings, types, dataRowFieldTypes, headers, shouldWrite)
-	w.writtenObject = true
-}
-
 func (w *writer) writeRegularObjectAttr(data []string, wasStrings []bool, types, dataRowFieldTypes []string, headers []string, shouldWrite []bool) {
 	if w.writtenObject {
 		//w.writeObjectSeparator()
@@ -333,44 +239,50 @@ func (w *writer) writeRegularObjectAttr(data []string, wasStrings []bool, types,
 	w.writtenObject = true
 }
 
+func (w *writer) writeRegularElement(values []string, headers []string, shouldWrite []bool) {
+	if len(values) == 0 {
+		return
+	}
+
+	for j := 0; j < len(values); j++ {
+		if !shouldWrite[j] {
+			continue
+		}
+
+		asString := EscapeSpecialChars(values[j], w.config)
+
+		if asString == w.config.escapedNullValue {
+			if w.config.RegularNullValue == "" {
+				asString = w.config.NewLineSeparator + "<" + headers[j] + "/>"
+			} else {
+				asString = w.config.NewLineSeparator + "<" + headers[j] +
+					" " + w.config.RegularNullValue +
+					"/>"
+			}
+			w.buffer.writeString(asString)
+			continue
+		}
+
+		asString = w.config.NewLineSeparator + "<" + headers[j] + ">" +
+			asString +
+			"</" + headers[j] + ">"
+
+		w.buffer.writeString(asString)
+	}
+	w.writtenObject = true
+}
+
 func (a *Accessor) RegularHeaders() ([]string, []string) {
 
 	headers := make([]string, len(a.fields))
 	headerRowFieldTypes := make([]string, len(a.fields))
-	//var rowFieldType string
-	//var ok bool
 
 	for i, field := range a.fields {
-		//tag := field.xField.Tag // TODO MFI TAG
-		//if tag != "" {
-		//	fmt.Printf(" %s tag = %s\n", field.name, tag)
-		//}
-		//	tag := field.xField.Type. //ParseTag(field.Tag.Get(option.TagSqlx))
 		if headers[i] = field.tag.Name; headers[i] == "" {
 			headers[i] = field.name
 		}
-
-		//rowFieldType, ok = a.config.HeaderRowFieldType[field.xField.Type.String()]
-		//if ok {
-		//	headerRowFieldTypes[i] = rowFieldType
-		//} else {
-		//	headerRowFieldTypes[i] = "TYPE_ERR"
-		//}
 	}
 
-	/***
-		for _, child := range a.children {
-			//if child.config == nil {
-			//	childHeaders := child.Headers()
-			//	headers = append(headers, childHeaders...)
-			//} else {
-			//	headers = append(headers, child.holder)
-			//}
-			//headers = append(headers, child.holder)
-
-			headers = append(headers, child.field.Name)
-		}
-	***/
 	return headers, headerRowFieldTypes
 }
 
