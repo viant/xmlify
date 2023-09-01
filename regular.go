@@ -95,7 +95,7 @@ func (w *writer) writeRegularAllObjects(acc *Accessor, parentLevel bool) {
 
 		for acc.Has() {
 
-			result, wasStrings, types, _, shouldWrite, fieldNames := acc.stringifyRegularFields(w, &headers, &attrNames)
+			result, wasStrings, types, _, shouldWrite, fieldNames := acc.stringifyRegularFields(w, &headers, &attrNames, &areAttributes)
 
 			//len(field)< len(result) // when one of field is a slice !!!
 
@@ -137,7 +137,7 @@ func (w *writer) writeRegularAllObjects(acc *Accessor, parentLevel bool) {
 				start = lowerBound[j]
 				end = upperBound[j]
 
-				if areAttributes[start] && shouldWrite[start] { // TODO handle slices
+				if areAttributes[start] && shouldWrite[start] { // TODO handle slices ?
 					w.writeRegularObjectAttr(result[start:end], wasStrings[start:end], types[start:end], []string{}, attrNames[start:end], shouldWrite[start:end])
 
 				}
@@ -151,7 +151,7 @@ func (w *writer) writeRegularAllObjects(acc *Accessor, parentLevel bool) {
 				end = upperBound[j]
 
 				if !areAttributes[start] && shouldWrite[start] { // whole result[start:end] represents one field (can be a slice)
-					w.writeRegularElement(result[start:end], headers[start:end], shouldWrite[start:end])
+					w.writeRegularElement(result[start:end], headers[start:end], shouldWrite[start:end], field)
 				}
 
 				for _, child := range acc.children {
@@ -227,7 +227,7 @@ func WriteRegularObjectAttr(writer *Buffer, config *Config, values []string, was
 	//writer.writeString("]")
 }
 
-func (w *writer) writeRegularObjectAttr(data []string, wasStrings []bool, types, dataRowFieldTypes []string, headers []string, shouldWrite []bool) {
+func (w *writer) writeRegularObjectAttr(data []string, wasStrings []bool, types, dataRowFieldTypes, headers []string, shouldWrite []bool) {
 	if w.writtenObject {
 		//w.writeObjectSeparator()
 	} else {
@@ -239,7 +239,7 @@ func (w *writer) writeRegularObjectAttr(data []string, wasStrings []bool, types,
 	w.writtenObject = true
 }
 
-func (w *writer) writeRegularElement(values []string, headers []string, shouldWrite []bool) {
+func (w *writer) writeRegularElement(values []string, headers []string, shouldWrite []bool, field *Field) {
 	if len(values) == 0 {
 		return
 	}
@@ -252,6 +252,10 @@ func (w *writer) writeRegularElement(values []string, headers []string, shouldWr
 		asString := EscapeSpecialChars(values[j], w.config)
 
 		if asString == w.config.escapedNullValue {
+			if field.tag.OmitEmpty {
+				continue
+			}
+
 			if w.config.RegularNullValue == "" {
 				asString = w.config.NewLineSeparator + "<" + headers[j] + "/>"
 			} else {
@@ -286,7 +290,7 @@ func (a *Accessor) RegularHeaders() ([]string, []string) {
 	return headers, headerRowFieldTypes
 }
 
-func (a *Accessor) stringifyRegularFields(writer *writer, headers *[]string, attrNames *[]string) ([]string, []bool, []string, []string, []bool, []string) {
+func (a *Accessor) stringifyRegularFields(writer *writer, headers *[]string, attrNames *[]string, areAttributes *[]bool) ([]string, []bool, []string, []string, []bool, []string) {
 	if value, ok := a.cache[a.ptr]; ok {
 		return value.values, value.wasStrings, value.types, value.dataRowFieldTypes, value.shouldWrite, value.fieldNames
 	}
@@ -307,15 +311,26 @@ func (a *Accessor) stringifyRegularFields(writer *writer, headers *[]string, att
 		return strings, make([]bool, len(a.fields)), make([]string, len(a.fields)), make([]string, len(a.fields)), make([]bool, len(a.fields)), make([]string, len(a.fields))
 	}
 
-	//var rowFieldType string
-	//var ok bool
-	sliceOffset := 0
+	currentCounter := 0
 	var sizeElem uintptr
 	var feType reflect.Type
 	var feKind reflect.Kind
 
-	for i, field := range a.fields {
-		fieldNames[i+sliceOffset] = field.name
+	// TODO MFI
+	var newHeaders = make([]string, len(*headers))
+	var newAttrNames = make([]string, len(*attrNames))
+	var newAreAttributes = make([]bool, len(*areAttributes))
+
+	for fieldNumber, field := range a.fields {
+		if currentCounter >= len(fieldNames) {
+			// TODO MFI
+		}
+
+		fieldNames[currentCounter] = field.name
+		newHeaders[currentCounter] = (*headers)[fieldNumber]
+		newAttrNames[currentCounter] = (*attrNames)[fieldNumber]
+		newAreAttributes[currentCounter] = (*areAttributes)[fieldNumber]
+
 		fType := field.xField.Type
 		fKind := fType.Kind()
 
@@ -325,6 +340,7 @@ func (a *Accessor) stringifyRegularFields(writer *writer, headers *[]string, att
 		}
 
 		if fKind == reflect.Struct {
+			currentCounter++
 			continue
 		}
 
@@ -362,20 +378,32 @@ func (a *Accessor) stringifyRegularFields(writer *writer, headers *[]string, att
 			case reflect.String:
 				sizeElem = unsafe.Sizeof(*new(string))
 			default:
+				currentCounter++
 				continue
 			}
 
-			sHdr := (*reflect.SliceHeader)(a.ptr /*unsafe.Pointer(&s)*/)
-			//fmt.Printf("Len = %d, Cap = %d", sHdr.Len, sHdr.Cap)
-			result = append(result, make([]string, sHdr.Len-1)...)
-			wasStrings = append(wasStrings, make([]bool, sHdr.Len-1)...)
-			types = append(types, make([]string, sHdr.Len-1)...)
-			*headers = append(*headers, make([]string, sHdr.Len-1)...)
-			*attrNames = append(*attrNames, make([]string, sHdr.Len-1)...)
-			shouldWrite = append(shouldWrite, make([]bool, sHdr.Len-1)...)
-			fieldNames = append(fieldNames, make([]string, sHdr.Len-1)...)
+			sHdr := (*reflect.SliceHeader)(unsafe.Add(a.ptr, field.xField.Offset) /*unsafe.Pointer(&s)*/)
 
-			//fmt.Printf("sizElem Z = %d\n", sizeElem)
+			if sHdr.Len == 0 {
+				result[currentCounter] = a.config.NullValue
+				wasStrings[currentCounter] = true
+				types[currentCounter] = field.xField.Type.String()
+				shouldWrite[currentCounter] = true
+				fieldNames[currentCounter] = field.name
+				currentCounter++
+				continue
+			}
+
+			if sHdr.Len > 1 {
+				result = append(result, make([]string, sHdr.Len-1)...)
+				wasStrings = append(wasStrings, make([]bool, sHdr.Len-1)...)
+				types = append(types, make([]string, sHdr.Len-1)...)
+				newHeaders = append(newHeaders, make([]string, sHdr.Len-1)...)
+				newAttrNames = append(newAttrNames, make([]string, sHdr.Len-1)...)
+				newAreAttributes = append(newAreAttributes, make([]bool, sHdr.Len-1)...)
+				shouldWrite = append(shouldWrite, make([]bool, sHdr.Len-1)...)
+				fieldNames = append(fieldNames, make([]string, sHdr.Len-1)...)
+			}
 
 			for j := 0; j < sHdr.Len; j++ {
 				zPtr := unsafe.Pointer(sHdr.Data + uintptr(j)*sizeElem)
@@ -409,38 +437,30 @@ func (a *Accessor) stringifyRegularFields(writer *writer, headers *[]string, att
 					z = fmt.Sprintf("%f", *(*float64)(zPtr))
 				case reflect.String:
 					z = *(*string)(zPtr)
-				//	sizeElem = unsafe.Sizeof(*(new(string)))
 				default:
 					continue
 				}
 
-				result[i+sliceOffset], wasStrings[i+sliceOffset] = z, true
-				types[i+sliceOffset] = "string" //TODO delete
-				shouldWrite[i+sliceOffset] = true
-				fieldNames[i+sliceOffset] = field.name
-				if sliceOffset > 0 {
-					(*headers)[i+sliceOffset] = (*headers)[i+sliceOffset-1]
-					(*attrNames)[i+sliceOffset] = (*attrNames)[i+sliceOffset-1]
+				fieldNames[currentCounter] = field.name
+				result[currentCounter], wasStrings[currentCounter] = z, true
+				types[currentCounter] = "string" //TODO delete
+				shouldWrite[currentCounter] = true
+
+				if j > 0 {
+					newHeaders[currentCounter] = (*headers)[fieldNumber]
+					newAttrNames[currentCounter] = (*attrNames)[fieldNumber]
+					newAreAttributes[currentCounter] = (*areAttributes)[fieldNumber]
 				}
-				sliceOffset++
+				currentCounter++
 
 			}
-			fmt.Println()
-			//runtime.KeepAlive(s)
 		} else {
-			result[i+sliceOffset], wasStrings[i+sliceOffset] = field.stringifier(a.ptr) //TODO how to get real type here?
-			types[i+sliceOffset] = field.xField.Type.String()
-			shouldWrite[i+sliceOffset] = true
-			fieldNames[i+sliceOffset] = field.name
+			result[currentCounter], wasStrings[currentCounter] = field.stringifier(a.ptr)
+			types[currentCounter] = field.xField.Type.String()
+			shouldWrite[currentCounter] = true
+			fieldNames[currentCounter] = field.name
+			currentCounter++
 		}
-
-		//rowFieldType, ok = a.config.DataRowFieldTypes[types[i]]
-		//if ok {
-		//	DataRowFieldTypes[i] = rowFieldType
-		//} else {
-		//	DataRowFieldTypes[i] = "TYPE_ERR"
-		//}
-
 	}
 
 	a.cache[a.ptr] = &stringified{
@@ -450,6 +470,15 @@ func (a *Accessor) stringifyRegularFields(writer *writer, headers *[]string, att
 		dataRowFieldTypes: dataRowFieldTypes,
 		shouldWrite:       shouldWrite,
 		fieldNames:        fieldNames,
+	}
+
+	if len(*headers) != len(newHeaders) {
+		*headers = append(*headers, newHeaders[len(*headers):]...)
+		*attrNames = append(*attrNames, newAttrNames[len(*attrNames):]...)
+		*areAttributes = append(*areAttributes, newAreAttributes[len(*areAttributes):]...)
+		copy(*headers, newHeaders)
+		copy(*attrNames, newAttrNames)
+		copy(*areAttributes, newAreAttributes)
 	}
 
 	return result, wasStrings, types, dataRowFieldTypes, shouldWrite, fieldNames

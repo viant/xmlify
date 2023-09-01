@@ -9,28 +9,38 @@ import (
 	"time"
 )
 
-// iso8601 -> 2023-07-05T00:00:00.000Z
-// RFC3339Nano
-// https://stackoverflow.com/questions/35479041/how-to-convert-iso-8601-time-in-golang
-// https://ijmacd.github.io/rfc3339-iso8601/
-func Test_Time(t *testing.T) { // TODO DELETE MFI
-	t2 := time.Now()
+func Test_RegularXML_Response_Marshal_Filter_Tabular(t *testing.T) {
 
-	format := "2006-01-02T15:04:05.999999999Z07:00"
-	fmt.Println(t2.Format(format))
-	format2 := "2006-01-02T15:04:05.000Z07:00"
-	fmt.Println(t2.Format(format2))
-	format3 := "2006-01-02T15:04:05.000Z" // WRONG
-	fmt.Println(t2.Format(format3))
+	type Result struct {
+		Id   int     "sqlx:\"name=ID\" velty:\"names=ID|Id\""
+		Name *string "sqlx:\"name=NAME\" velty:\"names=NAME|Name\""
+	}
 
-	format4 := "2006-01-02T15:04:05.000Z07:00" // CORRECT adjusted RFC3339Nano
-	fmt.Println(t2.UTC().Format(format4))
+	type IntFilter struct {
+		Include []int `json:",omitempty" xmlify:"omitempty,path=@include-ids"`
+		Exclude []int `json:",omitempty" xmlify:"omitempty,path=@exclude-ids"`
+	}
 
-}
+	type StringsFilter struct {
+		Include []string `json:",omitempty" xmlify:"omitempty,path=@include-ids"`
+		Exclude []string `json:",omitempty" xmlify:"omitempty,path=@exclude-ids"`
+	}
 
-//https://www.convertjson.com/json-to-xml.htm
+	type Filter struct {
+		ID          *IntFilter     "json:\",omitempty\" "
+		UserCreated *IntFilter     "json:\",omitempty\" "
+		Name        *StringsFilter "json:\",omitempty\" "
+		AccountID   *IntFilter     "json:\",omitempty\" "
+	}
 
-func Test_RegularXML_TODO_NOT_PASSED_Marshal(t *testing.T) {
+	type Response struct {
+		Result []*Result `xmlify:"name=result,tabular"`
+		Sql    string    `xmlify:"name=sql"`
+		Filter *Filter   `xmlify:"name=filter"`
+	}
+
+	nameStr := "name 1"
+	nameStr2 := "name 2"
 
 	var testCases = []struct {
 		description   string
@@ -42,18 +52,66 @@ func Test_RegularXML_TODO_NOT_PASSED_Marshal(t *testing.T) {
 		useAssertPkg  bool
 	}{
 		{
-			description: "10 slice of strings",
-			rType:       reflect.TypeOf(""),
-			input:       []string{"a", "b", ""},
+			description: "01 response ver. 01",
+			rType:       reflect.TypeOf(Response{}),
+			input: Response{
+				Result: []*Result{
+					{
+						Id:   1,
+						Name: &nameStr,
+					},
+					{
+						Id:   2,
+						Name: &nameStr2,
+					},
+				},
+				Sql: "abc\n",
+				Filter: &Filter{
+					ID: &IntFilter{
+						Include: []int{1, 2},
+						Exclude: []int{},
+					},
+					Name: &StringsFilter{
+						Include: []string{"Kate", "Ann"},
+						Exclude: []string{"Bob", "John"},
+					},
+					AccountID: &IntFilter{
+						Exclude: []int{444},
+					},
+				},
+			},
 
 			expected: `<?xml version="1.0" encoding="UTF-8" ?>
-		<root>
-		<row>a</row>
-		<row>b</row>
-		<row></row>
-		</root>`,
-			config:       getRegularConfig(),
-			useAssertPkg: false,
+<root>
+<result>
+<Id>1</Id>
+<Name>name 1</Name>
+</result>
+<result>
+<Id>2</Id>
+<Name>name 2</Name>
+</result>
+<sql>abc
+</sql>
+<filter>
+<ID>
+<Include>1</Include>
+<Include>2</Include>
+</ID>
+<Name>
+<Include>Kate</Include>
+<Include>Ann</Include>
+<Exclude>Bob</Exclude>
+<Exclude>John</Exclude>
+</Name>
+<AccountID>
+<Exclude>444</Exclude>
+</AccountID>
+</filter>
+</root>`,
+			config:        getMixedConfig(), //getRegularConfig(),
+			depthsConfigs: []*Config{},
+			useAssertPkg:  false,
 		},
 	}
 	for _, testCase := range testCases {
@@ -94,29 +152,38 @@ func Test_RegularXML_TODO_NOT_PASSED_Marshal(t *testing.T) {
 	}
 }
 
-func Test_RegularXMLTest067_Marshal(t *testing.T) {
+func Test_RegularXML_Response_Marshal_Filter(t *testing.T) {
 
-	type Products struct {
-		Id          int        `sqlx:"name=ID" velty:"names=ID|Id"`
-		Name        *string    `sqlx:"name=NAME" velty:"names=NAME|Name"`
-		VendorId    *int       `sqlx:"name=VENDOR_ID" velty:"names=VENDOR_ID|VendorId"`
-		Status      *int       `sqlx:"name=STATUS" velty:"names=STATUS|Status"`
-		Created     *time.Time `sqlx:"name=CREATED" velty:"names=CREATED|Created"`
-		UserCreated *int       `sqlx:"name=USER_CREATED" velty:"names=USER_CREATED|UserCreated"`
-		Updated     *time.Time `sqlx:"name=UPDATED" velty:"names=UPDATED|Updated"`
-		UserUpdated *int       `sqlx:"name=USER_UPDATED" velty:"names=USER_UPDATED|UserUpdated"`
+	type Result struct {
+		Id   int     "sqlx:\"name=ID\" velty:\"names=ID|Id\""
+		Name *string "sqlx:\"name=NAME\" velty:\"names=NAME|Name\""
 	}
 
-	type Vendor struct {
-		Id          int        `sqlx:"name=ID" velty:"names=ID|Id"`
-		Name        *string    `sqlx:"name=NAME" velty:"names=NAME|Name"`
-		AccountId   *int       `sqlx:"name=ACCOUNT_ID" velty:"names=ACCOUNT_ID|AccountId"`
-		Created     *time.Time `sqlx:"name=CREATED" velty:"names=CREATED|Created"`
-		UserCreated *int       `sqlx:"name=USER_CREATED" velty:"names=USER_CREATED|UserCreated"`
-		Updated     *time.Time `sqlx:"name=UPDATED" velty:"names=UPDATED|Updated"`
-		UserUpdated *int       `sqlx:"name=USER_UPDATED" velty:"names=USER_UPDATED|UserUpdated"`
-		Products    []*Products
+	type IntFilter struct {
+		Include []int `json:",omitempty" xmlify:"omitempty"`
+		Exclude []int `json:",omitempty" xmlify:"omitempty"`
 	}
+
+	type StringsFilter struct {
+		Include []string `json:",omitempty" xmlify:"omitempty"`
+		Exclude []string `json:",omitempty" xmlify:"omitempty"`
+	}
+
+	type Filter struct {
+		ID          *IntFilter     "json:\",omitempty\" "
+		UserCreated *IntFilter     "json:\",omitempty\" "
+		Name        *StringsFilter "json:\",omitempty\" "
+		AccountID   *IntFilter     "json:\",omitempty\" "
+	}
+
+	type Response struct {
+		Result []*Result `xmlify:"name=result"` //NOT tabular here
+		Sql    string    `xmlify:"name=sql"`
+		Filter *Filter   `xmlify:"name=filter"`
+	}
+
+	nameStr := "name 1"
+	nameStr2 := "name 2"
 
 	var testCases = []struct {
 		description   string
@@ -129,42 +196,64 @@ func Test_RegularXMLTest067_Marshal(t *testing.T) {
 	}{
 		{
 			description: "01 response ver. 01",
-			rType:       reflect.TypeOf(Vendor{}),
-			input: Vendor{
-				Id:          0,
-				Name:        nil,
-				AccountId:   nil,
-				Created:     nil,
-				UserCreated: nil,
-				Updated:     nil,
-				UserUpdated: nil,
-				Products:    nil,
+			rType:       reflect.TypeOf(Response{}),
+			input: Response{
+				Result: []*Result{
+					{
+						Id:   1,
+						Name: &nameStr,
+					},
+					{
+						Id:   2,
+						Name: &nameStr2,
+					},
+				},
+				Sql: "abc\n",
+				Filter: &Filter{
+					ID: &IntFilter{
+						Include: []int{1, 2},
+						Exclude: []int{},
+					},
+					Name: &StringsFilter{
+						Include: []string{"Kate", "Ann"},
+						Exclude: []string{"Bob", "John"},
+					},
+					AccountID: &IntFilter{
+						Exclude: []int{444},
+					},
+				},
 			},
 
 			expected: `<?xml version="1.0" encoding="UTF-8" ?>
 <root>
-<request>
-<query_string>views=TOTAL&amp;amp;from=2023-08-06&amp;amp;to</query_string>
-<timestamp>2023-08023</timestamp>
-<viewId>total</viewId>
-</request>
 <result>
-<avails>2476852</avails>
-<clearingPrice>0.43943723015873004</clearingPrice>
-<finalHhUniqsV1>37500</finalHhUniqsV1>
-<uniqs>520000</uniqs>
+<Id>1</Id>
+<Name>name 1</Name>
 </result>
-<sql>werwerewrew
+<result>
+<Id>2</Id>
+<Name>name 2</Name>
+</result>
+<sql>abc
 </sql>
 <filter>
-<providerTaxonomy>
-<include-ids>1</include-ids>
-<include-ids>2</include-ids>
-</providerTaxonomy>
+<ID>
+<Include>1</Include>
+<Include>2</Include>
+</ID>
+<Name>
+<Include>Kate</Include>
+<Include>Ann</Include>
+<Exclude>Bob</Exclude>
+<Exclude>John</Exclude>
+</Name>
+<AccountID>
+<Exclude>444</Exclude>
+</AccountID>
 </filter>
 </root>`,
 			config:        getMixedConfig(), //getRegularConfig(),
-			depthsConfigs: []*Config{getTabularConfig(), getTabularConfig(), getTabularConfig()},
+			depthsConfigs: []*Config{},
 			useAssertPkg:  false,
 		},
 	}

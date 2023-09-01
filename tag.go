@@ -8,6 +8,7 @@ type Tag struct {
 	Path      string
 	Transient bool //TODO implement
 	Tabular   bool
+	OmitEmpty bool
 }
 
 // Parse Tag parses tag
@@ -34,12 +35,16 @@ func ParseTag(tagString string) *Tag {
 				tag.Transient = strings.TrimSpace(nv[1]) == "true"
 			case "tabular":
 				tag.Tabular = strings.TrimSpace(nv[1]) == "true"
+			case "omitempty":
+				tag.OmitEmpty = strings.TrimSpace(nv[1]) == "true"
 			}
 			continue
 		case 1:
 			switch strings.ToLower(element) {
 			case "tabular":
 				tag.Tabular = true
+			case "omitempty":
+				tag.OmitEmpty = true
 			case "-":
 				tag.Transient = true
 			}

@@ -191,7 +191,7 @@ func (o *Object) depthConfig(configs []*Config, mainConfig *Config, depth int) (
 	}
 
 	if len(configs) == 0 {
-		return nil, nil
+		return mainConfig, nil
 	}
 
 	if len(configs) > depth-1 {
