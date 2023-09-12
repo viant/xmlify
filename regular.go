@@ -59,7 +59,7 @@ func (w *writer) writeRegularAllObjects(acc *Accessor, parentLevel bool) {
 		}
 	}
 
-	areAttributes, attrNames, containAttr := acc.attributes()
+	areAttributes, attrNames, containAttr, allAreAttr := acc.attributes()
 
 	if !(parentLevel && omitRootElement) && fieldKind != reflect.Slice && fieldName != "" {
 		if containAttr {
@@ -68,7 +68,7 @@ func (w *writer) writeRegularAllObjects(acc *Accessor, parentLevel bool) {
 			w.buffer.writeString(w.config.NewLineSeparator + "<" + fieldName + ">")
 		}
 
-		defer w.buffer.writeString(w.config.NewLineSeparator + "</" + fieldName + ">")
+		//defer w.buffer.writeString(w.config.NewLineSeparator + "<Z/" + fieldName + ">")
 	}
 
 	headers, _ /*hTypes*/ := acc.RegularHeaders() //TODO rename
@@ -100,7 +100,10 @@ func (w *writer) writeRegularAllObjects(acc *Accessor, parentLevel bool) {
 			//len(field)< len(result) // when one of field is a slice !!!
 
 			if fieldKind == reflect.Slice || acc.slice != nil {
-				w.buffer.writeString(w.config.NewLineSeparator + "<" + rowFieldName + ">")
+				w.buffer.writeString(w.config.NewLineSeparator + "<" + rowFieldName)
+				if !containAttr {
+					w.buffer.writeString(">")
+				}
 			}
 
 			// writing fields one by one in correct order (field can be a slice or attribute)
@@ -133,17 +136,21 @@ func (w *writer) writeRegularAllObjects(acc *Accessor, parentLevel bool) {
 			end = 0
 
 			// handle attributes first
-			for j, _ := range acc.fields {
+			for j, field := range acc.fields {
 				start = lowerBound[j]
 				end = upperBound[j]
 
 				if areAttributes[start] && shouldWrite[start] { // TODO handle slices ?
-					w.writeRegularObjectAttr(result[start:end], wasStrings[start:end], types[start:end], []string{}, attrNames[start:end], shouldWrite[start:end])
-
+					w.writeRegularObjectAttr(result[start:end], wasStrings[start:end], types[start:end], []string{}, attrNames[start:end], shouldWrite[start:end], field)
+					// TODO close tag when all fields are attributes?
 				}
 			}
 			if containAttr {
-				w.buffer.writeString(">")
+				if allAreAttr {
+					w.buffer.writeString("/>")
+				} else {
+					w.buffer.writeString(">")
+				}
 			}
 
 			for j, field := range acc.fields {
@@ -169,65 +176,74 @@ func (w *writer) writeRegularAllObjects(acc *Accessor, parentLevel bool) {
 				}
 			}
 
-			if fieldKind == reflect.Slice || acc.slice != nil {
+			if (fieldKind == reflect.Slice || acc.slice != nil) && !allAreAttr {
 				w.buffer.writeString(w.config.NewLineSeparator + "</" + rowFieldName + ">")
 			}
 
 		} // ~ has loop
 	} // ~ main for loop
+
+	if !(parentLevel && omitRootElement) && fieldKind != reflect.Slice && fieldName != "" {
+		if !allAreAttr {
+			w.buffer.writeString(w.config.NewLineSeparator + "</" + fieldName + ">")
+		}
+	}
 }
 
-func WriteRegularObjectAttr(writer *Buffer, config *Config, values []string, wasString []bool, types []string, dataRowFieldTypes []string, headers []string, shouldWrite []bool) {
+func (w *writer) WriteRegularObjectAttr(values []string, wasString []bool, types []string, dataRowFieldTypes []string, headers []string, shouldWrite []bool, field *Field) {
 	if len(values) == 0 {
 		return
 	}
-
-	escapedNullValue := EscapeSpecialChars(config.NullValue, config)
 
 	currentAttr := ""
 	lastAttr := ""
 
 	for j := 0; j < len(values); j++ {
-		if !shouldWrite[j] { // TODO CHECK IF NEEDED
+		if !shouldWrite[j] {
+			continue
+		}
+
+		asString := EscapeSpecialChars(values[j], w.config)
+
+		if field.tag.OmitEmpty && asString == w.config.escapedNullValue {
 			continue
 		}
 
 		currentAttr = headers[j]
 
 		if currentAttr != lastAttr && lastAttr != "" { // closing last attr
-			writer.writeString("\"")
+			w.buffer.writeString("\"")
 		}
 
 		if currentAttr != lastAttr { // opening new attr
-			writer.writeString(" " + currentAttr + "=" + "\"")
+			w.buffer.writeString(" " + currentAttr + "=" + "\"")
 		}
 
 		if currentAttr == lastAttr && lastAttr != "" { //separate another value for current attr
-			writer.writeString(",") // TODO ADD attr separator into config?
+			w.buffer.writeString(",") // TODO ADD attr separator into config?
 		}
-
-		asString := EscapeSpecialChars(values[j], config) //TODO MFI escaping
 
 		lastAttr = currentAttr
 
-		if asString == escapedNullValue {
-			asString = config.RegularNullValue
-			writer.writeString(asString)
+		if asString == w.config.escapedNullValue {
+			asString = w.config.RegularNullValue
+			w.buffer.writeString(asString)
 			continue
 		}
 
-		writer.writeString(asString)
+		w.buffer.writeString(asString)
 	}
 
 	//closing last attr
 	if lastAttr != "" {
-		writer.writeString("\"")
+		w.buffer.writeString("\"")
 	}
 
-	//writer.writeString("]")
+	//w.buffer.writeString("]")
 }
 
-func (w *writer) writeRegularObjectAttr(data []string, wasStrings []bool, types, dataRowFieldTypes, headers []string, shouldWrite []bool) {
+// TODO pass *Field
+func (w *writer) writeRegularObjectAttr(data []string, wasStrings []bool, types, dataRowFieldTypes, headers []string, shouldWrite []bool, field *Field) {
 	if w.writtenObject {
 		//w.writeObjectSeparator()
 	} else {
@@ -235,7 +251,7 @@ func (w *writer) writeRegularObjectAttr(data []string, wasStrings []bool, types,
 	}
 
 	//WriteObject(w.buffer, w.config, data, wasStrings)
-	WriteRegularObjectAttr(w.buffer, w.config, data, wasStrings, types, dataRowFieldTypes, headers, shouldWrite)
+	w.WriteRegularObjectAttr(data, wasStrings, types, dataRowFieldTypes, headers, shouldWrite, field)
 	w.writtenObject = true
 }
 
@@ -250,6 +266,8 @@ func (w *writer) writeRegularElement(values []string, headers []string, shouldWr
 		}
 
 		asString := EscapeSpecialChars(values[j], w.config)
+		tagStart := "<" + headers[j] + ">"
+		tagEnd := "</" + headers[j] + ">"
 
 		if asString == w.config.escapedNullValue {
 			if field.tag.OmitEmpty {
@@ -257,23 +275,30 @@ func (w *writer) writeRegularElement(values []string, headers []string, shouldWr
 			}
 
 			if w.config.RegularNullValue == "" {
-				asString = w.config.NewLineSeparator + "<" + headers[j] + "/>"
+				tagStart = "<" + headers[j]
+				tagEnd = "/>"
+				asString = w.buildElement(tagStart, "", tagEnd, field.tag.OmitTagName)
 			} else {
-				asString = w.config.NewLineSeparator + "<" + headers[j] +
-					" " + w.config.RegularNullValue +
-					"/>"
+				tagStart = "<" + headers[j] + " "
+				tagEnd = "/>"
+				asString = w.buildElement(tagStart, w.config.RegularNullValue, tagEnd, field.tag.OmitTagName)
 			}
 			w.buffer.writeString(asString)
 			continue
 		}
 
-		asString = w.config.NewLineSeparator + "<" + headers[j] + ">" +
-			asString +
-			"</" + headers[j] + ">"
-
+		asString = w.buildElement(tagStart, asString, tagEnd, field.tag.OmitTagName)
 		w.buffer.writeString(asString)
 	}
 	w.writtenObject = true
+}
+
+func (w *writer) buildElement(start, value, end string, omitTagName bool) string {
+	if omitTagName {
+		return value
+	}
+
+	return w.config.NewLineSeparator + start + value + end
 }
 
 func (a *Accessor) RegularHeaders() ([]string, []string) {
@@ -455,6 +480,7 @@ func (a *Accessor) stringifyRegularFields(writer *writer, headers *[]string, att
 
 			}
 		} else {
+			//			result[currentCounter], wasStrings[currentCounter] = field.stringifier(a.slicePtr)
 			result[currentCounter], wasStrings[currentCounter] = field.stringifier(a.ptr)
 			types[currentCounter] = field.xField.Type.String()
 			shouldWrite[currentCounter] = true

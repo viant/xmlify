@@ -4,11 +4,12 @@ import "strings"
 
 // Tag represent field tag
 type Tag struct {
-	Name      string
-	Path      string
-	Transient bool //TODO implement
-	Tabular   bool
-	OmitEmpty bool
+	Name        string
+	Path        string
+	Transient   bool //TODO implement
+	Tabular     bool
+	OmitEmpty   bool
+	OmitTagName bool
 }
 
 // Parse Tag parses tag
@@ -37,6 +38,8 @@ func ParseTag(tagString string) *Tag {
 				tag.Tabular = strings.TrimSpace(nv[1]) == "true"
 			case "omitempty":
 				tag.OmitEmpty = strings.TrimSpace(nv[1]) == "true"
+			case "omittagname":
+				tag.OmitTagName = strings.TrimSpace(nv[1]) == "true"
 			}
 			continue
 		case 1:
@@ -45,6 +48,8 @@ func ParseTag(tagString string) *Tag {
 				tag.Tabular = true
 			case "omitempty":
 				tag.OmitEmpty = true
+			case "omittagname":
+				tag.OmitTagName = true
 			case "-":
 				tag.Transient = true
 			}

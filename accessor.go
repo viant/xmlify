@@ -248,17 +248,24 @@ func (a *Accessor) Interfacer() *xunsafe.Type {
 	return a.xType
 }
 
-func (a *Accessor) attributes() ([]bool, []string, bool) {
+func (a *Accessor) attributes() ([]bool, []string, bool, bool) {
 	hasAttr := false
 	areAttr := make([]bool, len(a.fields))
 	names := make([]string, len(a.fields))
+	allAreAttr := true
+
+	if len(a.fields) == 0 {
+		allAreAttr = false
+	}
+
 	for i, field := range a.fields {
 		if areAttr[i] = strings.HasPrefix(field.xPath, "@"); areAttr[i] {
 			names[i] = field.xPath[1:]
 			hasAttr = true
+		} else {
+			allAreAttr = false
 		}
-
 	}
 
-	return areAttr, names, hasAttr
+	return areAttr, names, hasAttr, allAreAttr
 }

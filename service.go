@@ -161,7 +161,7 @@ func (m *Marshaller) Unmarshal(b []byte, dest interface{}) error {
 		}
 
 		if len(record) != len(fields) {
-			return fmt.Errorf("record header and the record are differ in length. Fields len: %v, Record len: %v", len(fields), len(record))
+			return fmt.Errorf("record header and the record are differ in length. Fields len: %v, ColumnValue len: %v", len(fields), len(record))
 		}
 
 		if err = session.addRecord(record); err != nil {
