@@ -52,6 +52,10 @@ type (
 	}
 )
 
+type XMLMarhsaler interface {
+	MarshalXML() ([]byte, error)
+}
+
 func NewMarshaller(rType reflect.Type, config *Config) (*Marshaller, error) {
 	if config == nil {
 		config = &Config{}

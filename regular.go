@@ -61,15 +61,49 @@ func (w *writer) writeRegularAllObjects(acc *Accessor, parentLevel bool) {
 
 	areAttributes, attrNames, containAttr, allAreAttr := acc.attributes()
 
-	if !(parentLevel && omitRootElement) && fieldKind != reflect.Slice && fieldName != "" {
+	customMarshaling := false
+	// check custom marshaling
+	if acc.field != nil && acc._parent != nil && acc._parent.ptr != nil {
+		value := acc.field.Value(acc.ptr)
+		if _, ok := value.(XMLMarhsaler); ok {
+			customMarshaling = true
+		}
+	}
+
+	// start
+	if !customMarshaling && !(parentLevel && omitRootElement) && fieldKind != reflect.Slice && fieldName != "" {
 		if containAttr {
 			w.buffer.writeString(w.config.NewLineSeparator + "<" + fieldName)
 		} else {
 			w.buffer.writeString(w.config.NewLineSeparator + "<" + fieldName + ">")
 		}
-
-		//defer w.buffer.writeString(w.config.NewLineSeparator + "<Z/" + fieldName + ">")
 	}
+
+	// custom marshaling
+	if customMarshaling {
+		w.buffer.writeString(w.config.NewLineSeparator)
+		value := acc.field.Value(acc._parent.ptr)
+		custom, ok := value.(XMLMarhsaler)
+		if ok {
+			data, err := custom.MarshalXML()
+			if err != nil {
+				w.buffer.writeString(err.Error()) //TODO error handling
+				fmt.Printf("custom marshaling error: %s\n", err.Error())
+				return
+			}
+			w.buffer.writeString(string(data))
+		}
+		return
+	}
+
+	// finish
+	defer func() {
+		if !customMarshaling && !(parentLevel && omitRootElement) && fieldKind != reflect.Slice && fieldName != "" {
+			if !allAreAttr {
+				w.buffer.writeString(w.config.NewLineSeparator + "</" + fieldName + ">")
+			}
+		}
+	}()
 
 	headers, _ /*hTypes*/ := acc.RegularHeaders() //TODO rename
 	var xType *xunsafe.Type
@@ -182,17 +216,14 @@ func (w *writer) writeRegularAllObjects(acc *Accessor, parentLevel bool) {
 
 		} // ~ has loop
 	} // ~ main for loop
-
-	if !(parentLevel && omitRootElement) && fieldKind != reflect.Slice && fieldName != "" {
-		if !allAreAttr {
-			w.buffer.writeString(w.config.NewLineSeparator + "</" + fieldName + ">")
-		}
-	}
 }
 
-func (w *writer) WriteRegularObjectAttr(values []string, wasString []bool, types []string, dataRowFieldTypes []string, headers []string, shouldWrite []bool, field *Field) {
+// TODO return ommited slice
+func (w *writer) WriteRegularObjectAttr(values []string, wasString []bool, types []string, dataRowFieldTypes []string, headers []string, shouldWrite []bool, field *Field) []bool {
+	omited := make([]bool, len(values))
+
 	if len(values) == 0 {
-		return
+		return omited
 	}
 
 	currentAttr := ""
@@ -206,6 +237,7 @@ func (w *writer) WriteRegularObjectAttr(values []string, wasString []bool, types
 		asString := EscapeSpecialChars(values[j], w.config)
 
 		if field.tag.OmitEmpty && asString == w.config.escapedNullValue {
+			omited[j] = true
 			continue
 		}
 
@@ -240,6 +272,7 @@ func (w *writer) WriteRegularObjectAttr(values []string, wasString []bool, types
 	}
 
 	//w.buffer.writeString("]")
+	return omited
 }
 
 // TODO pass *Field

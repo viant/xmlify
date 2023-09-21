@@ -84,29 +84,27 @@ func Test_RegularXML_Response_Marshal_Filter_Tabular(t *testing.T) {
 			expected: `<?xml version="1.0" encoding="UTF-8" ?>
 <root>
 <result>
-<Id>1</Id>
-<Name>name 1</Name>
-</result>
-<result>
-<Id>2</Id>
-<Name>name 2</Name>
+<columns>
+<column id="Id" type="long"/>
+<column id="Name" type="string"/>
+</columns>
+<rows>
+<r>
+<c lg="1"/>
+<c>name 1</c>
+</r>
+<r>
+<c lg="2"/>
+<c>name 2</c>
+</r>
+</rows>
 </result>
 <sql>abc
 </sql>
 <filter>
-<ID>
-<Include>1</Include>
-<Include>2</Include>
-</ID>
-<Name>
-<Include>Kate</Include>
-<Include>Ann</Include>
-<Exclude>Bob</Exclude>
-<Exclude>John</Exclude>
-</Name>
-<AccountID>
-<Exclude>444</Exclude>
-</AccountID>
+<ID include-ids="1,2"/>
+<Name include-ids="Kate,Ann" exclude-ids="Bob,John"/>
+<AccountID exclude-ids="444"/>
 </filter>
 </root>`,
 			config:        getMixedConfig(), //getRegularConfig(),
@@ -298,11 +296,12 @@ func Test_RegularXML_Response_Marshal_Filter(t *testing.T) {
 func Test_RegularXML_Attributes_Marshal(t *testing.T) {
 
 	type Example01 struct {
-		Id     int `xmlify:"path=@id"`
-		Name   string
-		Flag01 string `xmlify:"path=@flag_01"`
-		Desc   string
-		Flag02 string `xmlify:"path=@flag_02"`
+		FooIntPtr *int `xmlify:"path=@idPtr,omitempty"`
+		Id        int  `xmlify:"path=@id"`
+		Name      string
+		Flag01    string `xmlify:"path=@flag_01"`
+		Desc      string
+		Flag02    string `xmlify:"path=@flag_02"`
 	}
 
 	type Example02B struct {
@@ -362,8 +361,7 @@ func Test_RegularXML_Attributes_Marshal(t *testing.T) {
 
 			expected: `<?xml version="1.0" encoding="UTF-8" ?>
 <filter>
-<provider_taxonomy include-ids="1,2">
-</provider_taxonomy>
+<provider_taxonomy include-ids="1,2"/>
 </filter>`,
 			config:        getMixedConfig(), //getRegularConfig(),
 			depthsConfigs: []*Config{getTabularConfig(), getTabularConfig(), getTabularConfig()},
@@ -433,34 +431,11 @@ func Test_RegularXML_Response_Marshal(t *testing.T) {
 
 	type Response struct {
 		Request *Request `xmlify:"name=request"`
-		Result  *Result  `xmlify:"name=result,tabular", `
+		Result  *Result  `xmlify:"name=result,tabular"`
 		Sql     string   `xmlify:"name=sql"`
 		Filter  *Filter  `xmlify:"name=filter"`
 	}
-	/*
-	   {
-	     "request": {
-	       "query_string": "views=TOTAL&amp;from=2023-08-06&amp;to",
-	       "timestamp": "2023-08023",
-	       "viewId": "total"
-	     },
-	     "result": {
-	       "avails": 2476852,
-	       "clearingPrice": 0.43943723015873004,
-	       "finalHhUniqsV1": 37500,
-	       "uniqs": 520000
-	     },
-	     "sql": "werwerewrew\n",
-	     "filter": {
-	       "providerTaxonomy": {
-	         "include-ids": [
-	           1,
-	           2
-	         ]
-	       }
-	     }
-	   }
-	*/
+
 	var testCases = []struct {
 		description   string
 		rType         reflect.Type
