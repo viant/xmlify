@@ -348,6 +348,35 @@ func (a *Accessor) RegularHeaders() ([]string, []string) {
 	return headers, headerRowFieldTypes
 }
 
+/////////
+//func defaultStringifier(field *xunsafe.Field, nullifyZeroValue bool, nullValue string) FieldStringifierFn {
+//
+//	timeLayout := field.Tag.Get("timeLayout")
+//	if timeLayout == "" {
+//		timeLayout = time.RFC3339
+//	}
+//
+//	if field.Type == timeType {
+//		return func(pointer unsafe.Pointer) (string, bool) {
+//			value := field.Time(pointer)
+//			if value.IsZero() && nullifyZeroValue {
+//				return nullValue, false
+//			}
+//			return value.Format(timeLayout), true
+//		}
+//	}
+//	if field.Type == timeTypePtr {
+//		return func(pointer unsafe.Pointer) (string, bool) {
+//			ptr := field.TimePtr(pointer)
+//			if ptr == nil || (nullifyZeroValue && *ptr == time.Time{}) {
+//				return nullValue, false
+//			}
+//			return ptr.Format(timeLayout), true
+//		}
+//	}
+//}
+///////
+
 func (a *Accessor) stringifyRegularFields(writer *writer, headers *[]string, attrNames *[]string, areAttributes *[]bool) ([]string, []bool, []string, []string, []bool, []string) {
 	if value, ok := a.cache[a.ptr]; ok {
 		return value.values, value.wasStrings, value.types, value.dataRowFieldTypes, value.shouldWrite, value.fieldNames
@@ -397,7 +426,8 @@ func (a *Accessor) stringifyRegularFields(writer *writer, headers *[]string, att
 			fKind = fType.Kind()
 		}
 
-		if fKind == reflect.Struct {
+		if fKind == reflect.Struct && field.xField.Type != timeType && field.xField.Type != timeTypePtr {
+			// TODO handle date
 			currentCounter++
 			continue
 		}

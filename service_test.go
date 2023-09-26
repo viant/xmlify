@@ -320,6 +320,12 @@ func Test_RegularXML_Attributes_Marshal(t *testing.T) {
 		Filter *Filter `xmlify:"name=filter"`
 	}
 
+	type Example05 struct {
+		StartTime time.Time `xmlify:"name=start_time,path=@started" timeLayout:"2006-01-02T15:04:05.000Z07:00"`
+		EndTime   time.Time `xmlify:"name=end_time,path=@ended"`
+		InsertDay time.Time `xmlify:"name=insert_day,path=@inserted" timeLayout:"2006-01-02Z"`
+	}
+
 	var testCases = []struct {
 		description   string
 		rType         reflect.Type
@@ -367,8 +373,22 @@ func Test_RegularXML_Attributes_Marshal(t *testing.T) {
 			depthsConfigs: []*Config{getTabularConfig(), getTabularConfig(), getTabularConfig()},
 			useAssertPkg:  false,
 		},
+		{
+			description: "03 - time",
+			rType:       reflect.TypeOf(Example05{}),
+			input: Example05{
+				StartTime: parseTime(time.DateTime, "2023-07-02 01:02:03.456"),
+				EndTime:   parseTime(time.DateTime, "2023-07-02 01:02:03.456"),
+				InsertDay: parseTime(time.DateTime, "2023-07-02 01:02:03.456"),
+			},
+			expected: `<?xml version="1.0" encoding="UTF-8" ?>
+<root started="2023-07-02T01:02:03.456Z" ended="2023-07-02T01:02:03Z" inserted="2023-07-02Z"/>`,
+			config:       getRegularConfig(),
+			useAssertPkg: false,
+		},
 	}
-	for _, testCase := range testCases[1:2] {
+	for _, testCase := range testCases {
+		//for _, testCase := range testCases[1:2] {
 
 		if testCase.rType == nil {
 			fn, ok := (testCase.input).(func() interface{})
@@ -569,6 +589,12 @@ func Test_RegularXML_Marshal(t *testing.T) {
 
 	type Example04 struct {
 		ProviderTaxonomy []string `xmlify:"name=provider_taxonomy"`
+	}
+
+	type Example05 struct {
+		StartTime time.Time `xmlify:"name=start_time" timeLayout:"2006-01-02T15:04:05.000Z07:00"`
+		EndTime   time.Time `xmlify:"name=end_time"`
+		InsertDay time.Time `xmlify:"name=insert_day" timeLayout:"2006-01-02Z"`
 	}
 
 	type Foo struct {
@@ -969,18 +995,27 @@ func Test_RegularXML_Marshal(t *testing.T) {
 			config:       getRegularConfig(),
 			useAssertPkg: false,
 		},
+		{
+			description: "16 - time",
+			rType:       reflect.TypeOf(Example05{}),
+			input: Example05{
+				StartTime: parseTime(time.DateTime, "2023-07-02 01:02:03.456"),
+				EndTime:   parseTime(time.DateTime, "2023-07-02 01:02:03.456"),
+				InsertDay: parseTime(time.DateTime, "2023-07-02 01:02:03.456"),
+			},
+			expected: `<?xml version="1.0" encoding="UTF-8" ?>
+<root>
+<start_time>2023-07-02T01:02:03.456Z</start_time>
+<end_time>2023-07-02T01:02:03Z</end_time>
+<insert_day>2023-07-02Z</insert_day>
+</root>`,
+			config:       getRegularConfig(),
+			useAssertPkg: false,
+		},
 	}
+
 	for _, testCase := range testCases {
 		//for _, testCase := range testCases[len(testCases)-1:] {
-		//for _, testCase := range testCases[0:7] {
-
-		//for _, testCase := range testCases[0:1] {
-		//for _, testCase := range testCases[1:2] {
-		//for _, testCase := range testCases[2:3] { //*
-		//for _, testCase := range testCases[3:4] {
-		//for _, testCase := range testCases[4:5] { // * ---> 5
-		//for _, testCase := range testCases[5:6] { // *
-		//for _, testCase := range testCases[6:7] { // *
 		//	for i, testCase := range testCases {
 		//fmt.Println("====", i, " ", testCase.description)
 
@@ -1229,10 +1264,6 @@ func Test_TabularXML_Marshal(t *testing.T) {
 		},
 	}
 	for _, testCase := range testCases {
-		//for _, testCase := range testCases[0:1] {
-		//for _, testCase := range testCases[1:2] {
-		//for _, testCase := range testCases[2:3] {
-		//for _, testCase := range testCases[3:4] {
 		//	for i, testCase := range testCases {
 		//fmt.Println("====", i, " ", testCase.description)
 
