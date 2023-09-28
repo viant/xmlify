@@ -10,6 +10,7 @@ type Tag struct {
 	Tabular     bool
 	OmitEmpty   bool
 	OmitTagName bool
+	Cdata       bool
 }
 
 // Parse Tag parses tag
@@ -36,6 +37,8 @@ func ParseTag(tagString string) *Tag {
 				tag.Transient = strings.TrimSpace(nv[1]) == "true"
 			case "tabular":
 				tag.Tabular = strings.TrimSpace(nv[1]) == "true"
+			case "cdata":
+				tag.Cdata = strings.TrimSpace(nv[1]) == "true"
 			case "omitempty":
 				tag.OmitEmpty = strings.TrimSpace(nv[1]) == "true"
 			case "omittagname":
@@ -46,6 +49,8 @@ func ParseTag(tagString string) *Tag {
 			switch strings.ToLower(element) {
 			case "tabular":
 				tag.Tabular = true
+			case "cdata":
+				tag.Cdata = true
 			case "omitempty":
 				tag.OmitEmpty = true
 			case "omittagname":

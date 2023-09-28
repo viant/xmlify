@@ -326,6 +326,10 @@ func Test_RegularXML_Attributes_Marshal(t *testing.T) {
 		InsertDay time.Time `xmlify:"name=insert_day,path=@inserted" timeLayout:"2006-01-02Z"`
 	}
 
+	type Example06Cdata struct {
+		Desc string `xmlify:"name=description,cdata=true"`
+	}
+
 	var testCases = []struct {
 		description   string
 		rType         reflect.Type
@@ -386,9 +390,27 @@ func Test_RegularXML_Attributes_Marshal(t *testing.T) {
 			config:       getRegularConfig(),
 			useAssertPkg: false,
 		},
+		{
+			description: "04 cdata",
+			rType:       reflect.TypeOf(Example06Cdata{}),
+			input: Example06Cdata{
+				Desc: `can't write this as standard value':
+> < " and &
+<foo></bar>
+`,
+			},
+			expected: `<?xml version="1.0" encoding="UTF-8" ?>
+<root>
+<description><![CDATA[can't write this as standard value':
+> < " and &
+<foo></bar>
+]]></description>
+</root>`,
+			config: getMixedConfig(),
+		},
 	}
 	for _, testCase := range testCases {
-		//for _, testCase := range testCases[1:2] {
+		//for _, testCase := range testCases[len(testCases)-1:] {
 
 		if testCase.rType == nil {
 			fn, ok := (testCase.input).(func() interface{})

@@ -288,17 +288,27 @@ func (w *writer) writeRegularObjectAttr(data []string, wasStrings []bool, types,
 	w.writtenObject = true
 }
 
+func (w *writer) wrapWithCdata(value string) string {
+	return "<![CDATA[" + value + "]]>"
+}
+
 func (w *writer) writeRegularElement(values []string, headers []string, shouldWrite []bool, field *Field) {
 	if len(values) == 0 {
 		return
 	}
+	var asString string
 
 	for j := 0; j < len(values); j++ {
 		if !shouldWrite[j] {
 			continue
 		}
 
-		asString := EscapeSpecialChars(values[j], w.config)
+		if field.tag.Cdata {
+			asString = w.wrapWithCdata(values[j])
+		} else {
+			asString = EscapeSpecialChars(values[j], w.config)
+		}
+
 		tagStart := "<" + headers[j] + ">"
 		tagEnd := "</" + headers[j] + ">"
 
@@ -310,24 +320,24 @@ func (w *writer) writeRegularElement(values []string, headers []string, shouldWr
 			if w.config.RegularNullValue == "" {
 				tagStart = "<" + headers[j]
 				tagEnd = "/>"
-				asString = w.buildElement(tagStart, "", tagEnd, field.tag.OmitTagName)
+				asString = w.buildElement(tagStart, "", tagEnd, field.tag)
 			} else {
 				tagStart = "<" + headers[j] + " "
 				tagEnd = "/>"
-				asString = w.buildElement(tagStart, w.config.RegularNullValue, tagEnd, field.tag.OmitTagName)
+				asString = w.buildElement(tagStart, w.config.RegularNullValue, tagEnd, field.tag)
 			}
 			w.buffer.writeString(asString)
 			continue
 		}
 
-		asString = w.buildElement(tagStart, asString, tagEnd, field.tag.OmitTagName)
+		asString = w.buildElement(tagStart, asString, tagEnd, field.tag)
 		w.buffer.writeString(asString)
 	}
 	w.writtenObject = true
 }
 
-func (w *writer) buildElement(start, value, end string, omitTagName bool) string {
-	if omitTagName {
+func (w *writer) buildElement(start, value, end string, tag *Tag) string {
+	if tag.OmitTagName {
 		return value
 	}
 
