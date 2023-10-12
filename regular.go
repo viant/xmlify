@@ -234,6 +234,10 @@ func (w *writer) WriteRegularObjectAttr(values []string, wasString []bool, types
 			continue
 		}
 
+		if field.tag.Transient {
+			continue
+		}
+
 		asString := EscapeSpecialChars(values[j], w.config)
 
 		if field.tag.OmitEmpty && asString == w.config.escapedNullValue {
@@ -300,6 +304,10 @@ func (w *writer) writeRegularElement(values []string, headers []string, shouldWr
 
 	for j := 0; j < len(values); j++ {
 		if !shouldWrite[j] {
+			continue
+		}
+
+		if field.tag.Transient {
 			continue
 		}
 

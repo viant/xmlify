@@ -586,6 +586,11 @@ func Test_RegularXML_Response_Marshal(t *testing.T) {
 
 func Test_RegularXML_Marshal(t *testing.T) {
 
+	type WithTransientName struct {
+		Id   int    `xmlify:"name=id"`
+		Name string `xmlify:"name=name,-"`
+	}
+
 	type Entry struct {
 		Id   int    `xmlify:"name=id"`
 		Name string `xmlify:"name=name"`
@@ -1030,6 +1035,20 @@ func Test_RegularXML_Marshal(t *testing.T) {
 <start_time>2023-07-02T01:02:03.456Z</start_time>
 <end_time>2023-07-02T01:02:03Z</end_time>
 <insert_day>2023-07-02Z</insert_day>
+</root>`,
+			config:       getRegularConfig(),
+			useAssertPkg: false,
+		},
+		{
+			description: "17 - simple single struct - transient element",
+			rType:       reflect.TypeOf(WithTransientName{}),
+			input: WithTransientName{
+				Id:   1,
+				Name: "should be transient",
+			},
+			expected: `<?xml version="1.0" encoding="UTF-8" ?>
+<root>
+<id>1</id>
 </root>`,
 			config:       getRegularConfig(),
 			useAssertPkg: false,
