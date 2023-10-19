@@ -162,7 +162,10 @@ func (o *Object) Accessor(accessorIndex int, mainConfig *Config, depth int, conf
 
 	var tag *Tag
 	if o.xField != nil {
-		tag = ParseTag(o.xField.Tag.Get(TagName))
+		tag, err = ParseTag(o.xField.Tag)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	accessor := &Accessor{

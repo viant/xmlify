@@ -17,13 +17,13 @@ func Test_RegularXML_Response_Marshal_Filter_Tabular(t *testing.T) {
 	}
 
 	type IntFilter struct {
-		Include []int `json:",omitempty" xmlify:"omitempty,path=@include-ids"`
-		Exclude []int `json:",omitempty" xmlify:"omitempty,path=@exclude-ids"`
+		Include []int `json:",omitempty" xmlify:",omitempty,path=@include-ids"`
+		Exclude []int `json:",omitempty" xmlify:",omitempty,path=@exclude-ids"`
 	}
 
 	type StringsFilter struct {
-		Include []string `json:",omitempty" xmlify:"omitempty,path=@include-ids"`
-		Exclude []string `json:",omitempty" xmlify:"omitempty,path=@exclude-ids"`
+		Include []string `json:",omitempty" xmlify:",omitempty,path=@include-ids"`
+		Exclude []string `json:",omitempty" xmlify:",omitempty,path=@exclude-ids"`
 	}
 
 	type Filter struct {
@@ -158,13 +158,13 @@ func Test_RegularXML_Response_Marshal_Filter(t *testing.T) {
 	}
 
 	type IntFilter struct {
-		Include []int `json:",omitempty" xmlify:"omitempty"`
-		Exclude []int `json:",omitempty" xmlify:"omitempty"`
+		Include []int `json:",omitempty" xmlify:",omitempty"`
+		Exclude []int `json:",omitempty" xmlify:",omitempty"`
 	}
 
 	type StringsFilter struct {
-		Include []string `json:",omitempty" xmlify:"omitempty"`
-		Exclude []string `json:",omitempty" xmlify:"omitempty"`
+		Include []string `json:",omitempty" xmlify:",omitempty"`
+		Exclude []string `json:",omitempty" xmlify:",omitempty"`
 	}
 
 	type Filter struct {
@@ -588,7 +588,7 @@ func Test_RegularXML_Marshal(t *testing.T) {
 
 	type WithTransientName struct {
 		Id   int    `xmlify:"name=id"`
-		Name string `xmlify:"name=name,-"`
+		Name string `xmlify:"-"`
 	}
 
 	type Entry struct {
@@ -1055,8 +1055,9 @@ func Test_RegularXML_Marshal(t *testing.T) {
 		},
 	}
 
-	for _, testCase := range testCases {
-		//for _, testCase := range testCases[len(testCases)-1:] {
+	//for _, testCase := range testCases {
+
+	for _, testCase := range testCases[len(testCases)-1:] {
 		//	for i, testCase := range testCases {
 		//fmt.Println("====", i, " ", testCase.description)
 

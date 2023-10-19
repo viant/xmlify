@@ -234,13 +234,13 @@ func (w *writer) WriteRegularObjectAttr(values []string, wasString []bool, types
 			continue
 		}
 
-		if field.tag.Transient {
+		if field.tag.Ignore {
 			continue
 		}
 
 		asString := EscapeSpecialChars(values[j], w.config)
 
-		if field.tag.OmitEmpty && asString == w.config.escapedNullValue {
+		if field.tag.Omitempty && asString == w.config.escapedNullValue {
 			omited[j] = true
 			continue
 		}
@@ -307,7 +307,7 @@ func (w *writer) writeRegularElement(values []string, headers []string, shouldWr
 			continue
 		}
 
-		if field.tag.Transient {
+		if field.tag.Ignore {
 			continue
 		}
 
@@ -321,7 +321,7 @@ func (w *writer) writeRegularElement(values []string, headers []string, shouldWr
 		tagEnd := "</" + headers[j] + ">"
 
 		if asString == w.config.escapedNullValue {
-			if field.tag.OmitEmpty {
+			if field.tag.Omitempty {
 				continue
 			}
 

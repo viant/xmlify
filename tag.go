@@ -1,66 +1,57 @@
 package xmlify
 
-import "strings"
+import (
+	"fmt"
+	"github.com/viant/structology/format"
+	"github.com/viant/structology/tags"
+	"reflect"
+	"strings"
+)
 
 // Tag represent field tag
 type Tag struct {
-	Name        string
+	format.Tag
 	Path        string
-	Transient   bool //TODO implement
 	Tabular     bool
-	OmitEmpty   bool
 	OmitTagName bool
 	Cdata       bool
 }
 
 // Parse Tag parses tag
-func ParseTag(tagString string) *Tag {
-	tag := &Tag{}
-	if tagString == "-" {
-		tag.Transient = true
-		return tag
+func ParseTag(rTag reflect.StructTag) (*Tag, error) {
+	fTag, err := format.Parse(rTag, TagName)
+	if err != nil {
+		return nil, err
 	}
-	elements := strings.Split(tagString, ",")
-	if len(elements) == 0 {
-		return tag
+	ret := &Tag{Tag: *fTag}
+	tagSgtring := rTag.Get(TagName)
+	if tagSgtring == "" {
+		return ret, nil
 	}
-	for _, element := range elements {
-		nv := strings.Split(element, "=")
-		switch len(nv) {
-		case 2:
-			switch strings.ToLower(strings.TrimSpace(nv[0])) {
-			case "name":
-				tag.Name = strings.TrimSpace(nv[1])
-			case "path":
-				tag.Path = strings.TrimSpace(nv[1])
-			case "transient":
-				tag.Transient = strings.TrimSpace(nv[1]) == "true"
-			case "tabular":
-				tag.Tabular = strings.TrimSpace(nv[1]) == "true"
-			case "cdata":
-				tag.Cdata = strings.TrimSpace(nv[1]) == "true"
-			case "omitempty":
-				tag.OmitEmpty = strings.TrimSpace(nv[1]) == "true"
-			case "omittagname":
-				tag.OmitTagName = strings.TrimSpace(nv[1]) == "true"
-			}
-			continue
-		case 1:
-			switch strings.ToLower(element) {
-			case "tabular":
-				tag.Tabular = true
-			case "cdata":
-				tag.Cdata = true
-			case "omitempty":
-				tag.OmitEmpty = true
-			case "omittagname":
-				tag.OmitTagName = true
-			case "-":
-				tag.Transient = true
+
+	values := tags.Values(tagSgtring)
+
+	err = values.MatchPairs(func(key, value string) error {
+		//fmt.Printf("### KEY %s VALUE %s\n", key, value)
+		switch key {
+
+		case "path":
+			ret.Path = strings.TrimSpace(value)
+			//fmt.Println(">>>>>>>>>>>PATH VALUE: ", value)
+		case "tabular":
+			ret.Tabular = strings.TrimSpace(value) == "true" || value == ""
+		case "cdata":
+			ret.Cdata = strings.TrimSpace(value) == "true" || value == ""
+		case "omittagname":
+			ret.OmitTagName = strings.TrimSpace(value) == "true" || value == ""
+		default:
+			if !format.IsValidTagKey(key) {
+				return fmt.Errorf("unsupportedxmlfy option:%s", key)
 			}
 		}
 
-	}
+		return nil
+	})
 
-	return tag
+	return ret, err
 }

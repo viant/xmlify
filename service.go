@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	io2 "github.com/viant/sqlx/io"
-
 	//io2 "github.com/viant/sqlx/io"
 	"github.com/viant/xunsafe"
 	"io"
@@ -122,7 +121,12 @@ func (m *Marshaller) indexByPath(parentType reflect.Type, path string, excluded 
 }
 
 func (m *Marshaller) asKeys(path string, field reflect.StructField) (pathKey string, positionsKey string) {
-	tag := ParseTag(field.Tag.Get(TagName))
+	tag, err := ParseTag(field.Tag)
+	if err != nil {
+		tag = &Tag{}
+	}
+	// TODO MFI - error handling
+
 	name := tag.Name
 
 	if name != "" {
@@ -182,7 +186,10 @@ func (m *Marshaller) newField(path string, holder string, field reflect.StructFi
 		stringifierConfig = &m.config.StringifierConfig
 	}
 
-	tag := ParseTag(xField.Tag.Get(TagName))
+	tag, err := ParseTag(xField.Tag)
+	if err != nil {
+		tag = &Tag{}
+	}
 	xPath := tag.Path
 	return &Field{
 		path:        path,
