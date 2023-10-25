@@ -37,7 +37,6 @@ func ParseTag(rTag reflect.StructTag) (*Tag, error) {
 
 		case "path":
 			ret.Path = strings.TrimSpace(value)
-			//fmt.Println(">>>>>>>>>>>PATH VALUE: ", value)
 		case "tabular":
 			ret.Tabular = strings.TrimSpace(value) == "true" || value == ""
 		case "cdata":
