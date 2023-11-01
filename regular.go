@@ -10,7 +10,7 @@ import (
 func (w *writer) writeRegularAllObjects(acc *Accessor, parentLevel bool) {
 
 	if parentLevel {
-		w.buffer.writeString(`<?xml version="1.0" encoding="UTF-8" ?>`) // TODO add to config?
+		w.buffer.writeString(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`) // TODO add to config?
 	}
 
 	if acc.fieldTag != nil && acc.fieldTag.Tabular {
@@ -311,11 +311,7 @@ func (w *writer) writeRegularElement(values []string, headers []string, shouldWr
 			continue
 		}
 
-		if field.tag.Cdata {
-			asString = w.wrapWithCdata(values[j])
-		} else {
-			asString = EscapeSpecialChars(values[j], w.config)
-		}
+		asString = EscapeSpecialChars(values[j], w.config)
 
 		tagStart := "<" + headers[j] + ">"
 		tagEnd := "</" + headers[j] + ">"
@@ -336,6 +332,10 @@ func (w *writer) writeRegularElement(values []string, headers []string, shouldWr
 			}
 			w.buffer.writeString(asString)
 			continue
+		}
+
+		if field.tag.Cdata {
+			asString = w.wrapWithCdata(values[j])
 		}
 
 		asString = w.buildElement(tagStart, asString, tagEnd, field.tag)

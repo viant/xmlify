@@ -81,7 +81,7 @@ func Test_RegularXML_Response_Marshal_Filter_Tabular(t *testing.T) {
 				},
 			},
 
-			expected: `<?xml version="1.0" encoding="UTF-8" ?>
+			expected: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <root>
 <result>
 <columns>
@@ -222,7 +222,7 @@ func Test_RegularXML_Response_Marshal_Filter(t *testing.T) {
 				},
 			},
 
-			expected: `<?xml version="1.0" encoding="UTF-8" ?>
+			expected: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <root>
 <result>
 <Id>1</Id>
@@ -327,7 +327,8 @@ func Test_RegularXML_Attributes_Marshal(t *testing.T) {
 	}
 
 	type Example06Cdata struct {
-		Desc string `xmlify:"name=description,cdata=true"`
+		Desc  string  `xmlify:"name=description,cdata=true"`
+		Desc2 *string `xmlify:"name=desc2,cdata=true,omitempty"`
 	}
 
 	var testCases = []struct {
@@ -351,7 +352,7 @@ func Test_RegularXML_Attributes_Marshal(t *testing.T) {
 					Flag02: "f2",
 				},
 			},
-			expected: `<?xml version="1.0" encoding="UTF-8" ?>
+			expected: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Ex id="1" flag_01="f1" flag_02="f2">
 <Name>name for 1</Name>
 <Desc>description 1</Desc>
@@ -369,7 +370,7 @@ func Test_RegularXML_Attributes_Marshal(t *testing.T) {
 				},
 			},
 
-			expected: `<?xml version="1.0" encoding="UTF-8" ?>
+			expected: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <filter>
 <provider_taxonomy include-ids="1,2"/>
 </filter>`,
@@ -385,7 +386,7 @@ func Test_RegularXML_Attributes_Marshal(t *testing.T) {
 				EndTime:   parseTime(time.DateTime, "2023-07-02 01:02:03.456"),
 				InsertDay: parseTime(time.DateTime, "2023-07-02 01:02:03.456"),
 			},
-			expected: `<?xml version="1.0" encoding="UTF-8" ?>
+			expected: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <root started="2023-07-02T01:02:03.456Z" ended="2023-07-02T01:02:03Z" inserted="2023-07-02Z"/>`,
 			config:       getRegularConfig(),
 			useAssertPkg: false,
@@ -398,8 +399,9 @@ func Test_RegularXML_Attributes_Marshal(t *testing.T) {
 > < " and &
 <foo></bar>
 `,
+				Desc2: nil,
 			},
-			expected: `<?xml version="1.0" encoding="UTF-8" ?>
+			expected: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <root>
 <description><![CDATA[can't write this as standard value':
 > < " and &
@@ -409,7 +411,9 @@ func Test_RegularXML_Attributes_Marshal(t *testing.T) {
 			config: getMixedConfig(),
 		},
 	}
+
 	for _, testCase := range testCases {
+		//for _, testCase := range testCases[3:4] {
 		//for _, testCase := range testCases[len(testCases)-1:] {
 
 		if testCase.rType == nil {
@@ -509,7 +513,7 @@ func Test_RegularXML_Response_Marshal(t *testing.T) {
 				},
 			},
 
-			expected: `<?xml version="1.0" encoding="UTF-8" ?>
+			expected: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <root>
 <request>
 <query_string>views=TOTAL&amp;amp;from=2023-08-06&amp;amp;to</query_string>
@@ -669,7 +673,7 @@ func Test_RegularXML_Marshal(t *testing.T) {
 				Id:   1,
 				Name: "name 1",
 			},
-			expected: `<?xml version="1.0" encoding="UTF-8" ?>
+			expected: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <root>
 <Id>1</Id>
 <Name>name 1</Name>
@@ -686,7 +690,7 @@ func Test_RegularXML_Marshal(t *testing.T) {
 					Name: "name 1",
 				},
 			},
-			expected: `<?xml version="1.0" encoding="UTF-8" ?>
+			expected: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <root>
 <row>
 <Id>1</Id>
@@ -713,7 +717,7 @@ func Test_RegularXML_Marshal(t *testing.T) {
 					Name: "name 3",
 				},
 			},
-			expected: `<?xml version="1.0" encoding="UTF-8" ?>
+			expected: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <root>
 <row>
 <Id>1</Id>
@@ -741,7 +745,7 @@ func Test_RegularXML_Marshal(t *testing.T) {
 					Name: "name for 1",
 				},
 			},
-			expected: `<?xml version="1.0" encoding="UTF-8" ?>
+			expected: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <root>
 <Id>2</Id>
 <Ex>
@@ -764,7 +768,7 @@ func Test_RegularXML_Marshal(t *testing.T) {
 					},
 				},
 			},
-			expected: `<?xml version="1.0" encoding="UTF-8" ?>
+			expected: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <root>
 <row>
 <Id>2</Id>
@@ -786,7 +790,7 @@ func Test_RegularXML_Marshal(t *testing.T) {
 					Name: "name for 1",
 				},
 			},
-			expected: `<?xml version="1.0" encoding="UTF-8" ?>
+			expected: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Ex>
 <Id>1</Id>
 <Name>name for 1</Name>
@@ -806,7 +810,7 @@ func Test_RegularXML_Marshal(t *testing.T) {
 					},
 				},
 			},
-			expected: `<?xml version="1.0" encoding="UTF-8" ?>
+			expected: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <root>
 <row>
 <Ex>
@@ -828,7 +832,7 @@ func Test_RegularXML_Marshal(t *testing.T) {
 					{Id: 12, Name: "Tacher"},
 				},
 			},
-			expected: `<?xml version="1.0" encoding="UTF-8" ?>
+			expected: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <root>
 <entries>
 <id>11</id>
@@ -853,7 +857,7 @@ func Test_RegularXML_Marshal(t *testing.T) {
 					},
 				},
 			},
-			expected: `<?xml version="1.0" encoding="UTF-8" ?>
+			expected: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <root>
 <row>
 <entries>
@@ -874,7 +878,7 @@ func Test_RegularXML_Marshal(t *testing.T) {
 		//			rType:       reflect.TypeOf(""),
 		//			input:       []string{"a", "b", ""},
 		//
-		//			expected: `<?xml version="1.0" encoding="UTF-8" ?>
+		//			expected: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 		//<root>
 		//<row>a</row>
 		//<row>b</row>
@@ -889,7 +893,7 @@ func Test_RegularXML_Marshal(t *testing.T) {
 			input: Example04{
 				ProviderTaxonomy: []string{"a", "b", ""},
 			},
-			expected: `<?xml version="1.0" encoding="UTF-8" ?>
+			expected: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <root>
 <provider_taxonomy>a</provider_taxonomy>
 <provider_taxonomy>b</provider_taxonomy>
@@ -910,7 +914,7 @@ func Test_RegularXML_Marshal(t *testing.T) {
 					},
 				},
 			},
-			expected: `<?xml version="1.0" encoding="UTF-8" ?>
+			expected: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Foo>
 <FooId>1</FooId>
 <entries>
@@ -937,7 +941,7 @@ func Test_RegularXML_Marshal(t *testing.T) {
 					},
 				},
 			},
-			expected: `<?xml version="1.0" encoding="UTF-8" ?>
+			expected: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Race>
 <entries>
 <id>11</id>
@@ -965,7 +969,7 @@ func Test_RegularXML_Marshal(t *testing.T) {
 					},
 				},
 			},
-			expected: `<?xml version="1.0" encoding="UTF-8" ?>
+			expected: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <race_wrapper>
 <race>
 <entries>
@@ -994,7 +998,7 @@ func Test_RegularXML_Marshal(t *testing.T) {
 					"greater than (>)",
 				},
 			},
-			expected: `<?xml version="1.0" encoding="UTF-8" ?>
+			expected: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <root>
 <ex>ampersand (&amp;)</ex>
 <ex>double quotes (&quot;)</ex>
@@ -1014,7 +1018,7 @@ func Test_RegularXML_Marshal(t *testing.T) {
 					Entries: nil,
 				},
 			},
-			expected: `<?xml version="1.0" encoding="UTF-8" ?>
+			expected: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Foo>
 <FooId>1</FooId>
 </Foo>
@@ -1030,7 +1034,7 @@ func Test_RegularXML_Marshal(t *testing.T) {
 				EndTime:   parseTime(time.DateTime, "2023-07-02 01:02:03.456"),
 				InsertDay: parseTime(time.DateTime, "2023-07-02 01:02:03.456"),
 			},
-			expected: `<?xml version="1.0" encoding="UTF-8" ?>
+			expected: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <root>
 <start_time>2023-07-02T01:02:03.456Z</start_time>
 <end_time>2023-07-02T01:02:03Z</end_time>
@@ -1046,7 +1050,7 @@ func Test_RegularXML_Marshal(t *testing.T) {
 				Id:   1,
 				Name: "should be transient",
 			},
-			expected: `<?xml version="1.0" encoding="UTF-8" ?>
+			expected: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <root>
 <id>1</id>
 </root>`,
