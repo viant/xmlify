@@ -11,10 +11,11 @@ import (
 // Tag represent field tag
 type Tag struct {
 	format.Tag
-	Path        string
-	Tabular     bool
-	OmitTagName bool
-	Cdata       bool
+	Path         string
+	Tabular      bool
+	OmitTagName  bool
+	Cdata        bool
+	NullifyEmpty bool
 }
 
 // Parse Tag parses tag
@@ -43,6 +44,8 @@ func ParseTag(rTag reflect.StructTag) (*Tag, error) {
 			ret.Cdata = strings.TrimSpace(value) == "true" || value == ""
 		case "omittagname":
 			ret.OmitTagName = strings.TrimSpace(value) == "true" || value == ""
+		case "nullifyempty":
+			ret.NullifyEmpty = strings.TrimSpace(value) == "true" || value == ""
 		default:
 			if !format.IsValidTagKey(key) {
 				return fmt.Errorf("unsupportedxmlfy option:%s", key)

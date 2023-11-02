@@ -198,7 +198,7 @@ func (m *Marshaller) newField(path string, holder string, field reflect.StructFi
 		name:        field.Name,
 		header:      fieldPath,
 		holder:      holder,
-		stringifier: io2.Stringifier(xField, false, m.config.NullValue, stringifierConfig),
+		stringifier: io2.Stringifier(xField, tag.NullifyEmpty, m.config.NullValue, stringifierConfig),
 		tag:         tag,
 		xPath:       xPath,
 	}

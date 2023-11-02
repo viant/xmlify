@@ -329,6 +329,8 @@ func Test_RegularXML_Attributes_Marshal(t *testing.T) {
 	type Example06Cdata struct {
 		Desc  string  `xmlify:"name=description,cdata=true"`
 		Desc2 *string `xmlify:"name=desc2,cdata=true,omitempty"`
+		Desc3 string  `xmlify:"name=desc3,cdata=true,omitempty"`
+		Desc4 string  `xmlify:"name=desc4,cdata=true,omitempty,nullifyempty"`
 	}
 
 	var testCases = []struct {
@@ -400,6 +402,8 @@ func Test_RegularXML_Attributes_Marshal(t *testing.T) {
 <foo></bar>
 `,
 				Desc2: nil,
+				Desc3: "",
+				Desc4: "",
 			},
 			expected: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <root>
@@ -407,6 +411,7 @@ func Test_RegularXML_Attributes_Marshal(t *testing.T) {
 > < " and &
 <foo></bar>
 ]]></description>
+<desc3><![CDATA[]]></desc3>
 </root>`,
 			config: getMixedConfig(),
 		},
