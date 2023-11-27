@@ -7,8 +7,8 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/viant/assertly v0.9.1-0.20220620174148-bab013f93a60
 	github.com/viant/sqlx v0.9.0
-	github.com/viant/structology v0.5.2-0.20231019172121-ccdad1eaadab
-	github.com/viant/tagly v0.1.0
+	github.com/viant/structology v0.5.6-0.20231127181208-736f8ad06193
+	github.com/viant/tagly v0.1.2-0.20231123035525-6cf2e043531e
 	github.com/viant/toolbox v0.34.6-0.20221112031702-3e7cdde7f888
 	github.com/viant/xunsafe v0.9.0
 )

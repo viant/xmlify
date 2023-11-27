@@ -2,8 +2,8 @@ package xmlify
 
 import (
 	"fmt"
-	"github.com/viant/structology/tags"
 	"github.com/viant/tagly/format"
+	"github.com/viant/tagly/tags"
 	"reflect"
 	"strings"
 )
