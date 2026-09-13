@@ -4,6 +4,7 @@ import (
 	"encoding/xml"
 	"io"
 	"reflect"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -12,6 +13,19 @@ type nestedCustomXML struct{ Value string }
 
 func (v *nestedCustomXML) MarshalXML() ([]byte, error) {
 	return []byte("<custom>" + v.Value + "</custom>"), nil
+}
+
+func TestAccessorValueOwnerSurvivesGC(t *testing.T) {
+	type row struct{ Value *string }
+	accessor := &Accessor{}
+	func() { value := "retained"; accessor.SetValue(row{Value: &value}) }()
+	for i := 0; i < 20; i++ {
+		runtime.GC()
+		actual := reflect.NewAt(reflect.TypeOf(row{}), accessor.ptr).Elem().Interface().(row)
+		if actual.Value == nil || *actual.Value != "retained" {
+			t.Fatalf("value owner lost after GC: %+v", actual)
+		}
+	}
 }
 
 func TestNestedCustomMarshallerUsesParentFieldPointer(t *testing.T) {
