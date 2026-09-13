@@ -64,7 +64,7 @@ func (w *writer) writeRegularAllObjects(acc *Accessor, parentLevel bool) {
 	customMarshaling := false
 	// check custom marshaling
 	if acc.field != nil && acc._parent != nil && acc._parent.ptr != nil {
-		value := acc.field.Value(acc.ptr)
+		value := acc.field.Value(acc._parent.ptr)
 		if _, ok := value.(XMLMarhsaler); ok {
 			customMarshaling = true
 		}
