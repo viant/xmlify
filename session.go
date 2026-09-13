@@ -153,6 +153,10 @@ func (s *UnmarshalSession) buildParentNode() (Node, bool) {
 }
 
 func (s *UnmarshalSession) destWithAppender(field *Field) (interface{}, *xunsafe.Appender) {
+	// Marshal only needs the field tree, not unmarshal destinations or appenders.
+	if s.dest == nil {
+		return nil, nil
+	}
 	if field.path == "" {
 		dest := s.dest
 		var appender *xunsafe.Appender
@@ -168,6 +172,8 @@ func (s *UnmarshalSession) destWithAppender(field *Field) (interface{}, *xunsafe
 		parentType = reflect.SliceOf(parentType)
 	}
 
-	dest := reflect.New(field.parentType).Interface()
+	// An appender reads a slice header; its storage must be the derived slice
+	// type, never one scalar parent object's allocation.
+	dest := reflect.New(parentType).Interface()
 	return dest, xunsafe.NewSlice(parentType).Appender(xunsafe.AsPointer(dest))
 }
