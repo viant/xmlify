@@ -3,6 +3,7 @@ package xmlify
 import (
 	io2 "github.com/viant/sqlx/io"
 	"github.com/viant/xunsafe"
+	"reflect"
 	"strings"
 	"unsafe"
 )
@@ -94,6 +95,29 @@ func (a *Accessor) Set(pointer unsafe.Pointer) {
 
 		child.currSliceIndex = 0
 	}
+}
+
+// SetValue retains a real struct allocation for value inputs, including Go's
+// direct-interface single-pointer structs. Already-addressable rows are reused.
+func (a *Accessor) SetValue(value interface{}) {
+	row := reflect.ValueOf(value)
+	for row.IsValid() && row.Kind() == reflect.Ptr {
+		if row.IsNil() {
+			a.Set(nil)
+			return
+		}
+		row = row.Elem()
+	}
+	if !row.IsValid() {
+		a.Set(nil)
+		return
+	}
+	if !row.CanAddr() {
+		address := reflect.New(row.Type())
+		address.Elem().Set(row)
+		row = address.Elem()
+	}
+	a.Set(row.Addr().UnsafePointer())
 }
 
 func (a *Accessor) getChildValue(pointer unsafe.Pointer, child *Accessor) (valuePtr unsafe.Pointer, slicePtr unsafe.Pointer) {

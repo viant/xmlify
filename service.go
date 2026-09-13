@@ -102,6 +102,7 @@ func (m *Marshaller) indexByPath(parentType reflect.Type, path string, excluded 
 		return
 	}
 	m.unqiueTypes[elemParentType] = true
+	defer delete(m.unqiueTypes, elemParentType)
 
 	numField := elemParentType.NumField()
 	m.pathAccessors[path] = parentAccessor

@@ -11,7 +11,7 @@ import (
 type nestedCustomXML struct{ Value string }
 
 func (v *nestedCustomXML) MarshalXML() ([]byte, error) {
-	return []byte("<custom>Ada</custom>"), nil
+	return []byte("<custom>" + v.Value + "</custom>"), nil
 }
 
 func TestNestedCustomMarshallerUsesParentFieldPointer(t *testing.T) {
@@ -96,6 +96,40 @@ func TestNestedSessionAppenderOwnsSliceStorage(t *testing.T) {
 		appender.Append(&profile{Name: "Ada"})
 		if reflect.ValueOf(dest).Elem().Len() != 1 {
 			t.Fatal("nested append failed")
+		}
+	}
+}
+
+func TestNestedSlicesAndRepeatedSiblingTypes(t *testing.T) {
+	type filter struct{ Values []int }
+	type siblings struct{ First, Second *filter }
+	type response struct{ Filters *siblings }
+	for _, input := range []any{
+		response{Filters: &siblings{First: &filter{Values: []int{11, 12}}, Second: &filter{Values: []int{21, 22}}}},
+		&response{Filters: &siblings{First: &filter{Values: []int{11, 12}}, Second: &filter{Values: []int{21, 22}}}},
+	} {
+		marshaller, err := NewMarshaller(reflect.TypeOf(response{}), &Config{RegularRootTag: "Response", RegularRowTag: "Row"})
+		if err != nil {
+			t.Fatal(err)
+		}
+		data, err := marshaller.Marshal(input)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, value := range []string{"<First>", "<Second>", ">11<", ">12<", ">21<", ">22<"} {
+			if !strings.Contains(string(data), value) {
+				t.Fatalf("missing %s in %s", value, data)
+			}
+		}
+		decoder := xml.NewDecoder(strings.NewReader(string(data)))
+		for {
+			_, err := decoder.Token()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				t.Fatalf("invalid XML %s: %v", data, err)
+			}
 		}
 	}
 }

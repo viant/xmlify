@@ -2,9 +2,7 @@ package xmlify
 
 import (
 	"fmt"
-	"github.com/viant/xunsafe"
 	"reflect"
-	"unsafe"
 )
 
 func (w *writer) writeRegularAllObjects(acc *Accessor, parentLevel bool) {
@@ -62,10 +60,14 @@ func (w *writer) writeRegularAllObjects(acc *Accessor, parentLevel bool) {
 	areAttributes, attrNames, containAttr, allAreAttr := acc.attributes()
 
 	customMarshaling := false
+	var custom XMLMarhsaler
 	// check custom marshaling
 	if acc.field != nil && acc._parent != nil && acc._parent.ptr != nil {
-		value := acc.field.Value(acc._parent.ptr)
-		if _, ok := value.(XMLMarhsaler); ok {
+		// Read the typed field from its parent allocation. Concrete pointers
+		// with methods are not interface cells and cannot be reinterpreted as one.
+		value := reflect.NewAt(acc.field.Type, acc.field.Pointer(acc._parent.ptr)).Elem().Interface()
+		if candidate, ok := value.(XMLMarhsaler); ok {
+			custom = candidate
 			customMarshaling = true
 		}
 	}
@@ -82,9 +84,7 @@ func (w *writer) writeRegularAllObjects(acc *Accessor, parentLevel bool) {
 	// custom marshaling
 	if customMarshaling {
 		w.buffer.writeString(w.config.NewLineSeparator)
-		value := acc.field.Value(acc._parent.ptr)
-		custom, ok := value.(XMLMarhsaler)
-		if ok {
+		if custom != nil {
 			data, err := custom.MarshalXML()
 			if err != nil {
 				w.buffer.writeString(err.Error()) //TODO error handling
@@ -106,7 +106,6 @@ func (w *writer) writeRegularAllObjects(acc *Accessor, parentLevel bool) {
 	}()
 
 	headers, _ /*hTypes*/ := acc.RegularHeaders() //TODO rename
-	var xType *xunsafe.Type
 
 	for i := 0; i < w.size; i++ {
 		acc.ResetAllChildren()
@@ -116,15 +115,7 @@ func (w *writer) writeRegularAllObjects(acc *Accessor, parentLevel bool) {
 				acc.Reset()
 			}
 			at := w.valueAt(i)
-			if i == 0 {
-				if reflect.TypeOf(at).Kind() == reflect.Ptr {
-					xType = w.dereferencer
-				}
-			}
-			if xType != nil {
-				at = xType.Deref(at)
-			}
-			acc.Set(xunsafe.AsPointer(at))
+			acc.SetValue(at)
 		}
 
 		for acc.Has() {
@@ -417,7 +408,6 @@ func (a *Accessor) stringifyRegularFields(writer *writer, headers *[]string, att
 	}
 
 	currentCounter := 0
-	var sizeElem uintptr
 	var feType reflect.Type
 	var feKind reflect.Kind
 
@@ -455,42 +445,23 @@ func (a *Accessor) stringifyRegularFields(writer *writer, headers *[]string, att
 			feKind = feType.Kind()
 
 			switch feKind {
-			case reflect.Bool:
-				sizeElem = unsafe.Sizeof(*new(bool))
-			case reflect.Int:
-				sizeElem = unsafe.Sizeof(*new(int))
-			case reflect.Int8:
-				sizeElem = unsafe.Sizeof(*new(int8))
-			case reflect.Int16:
-				sizeElem = unsafe.Sizeof(*new(int16))
-			case reflect.Int32:
-				sizeElem = unsafe.Sizeof(*new(int32))
-			case reflect.Int64:
-				sizeElem = unsafe.Sizeof(*new(int64))
-			case reflect.Uint:
-				sizeElem = unsafe.Sizeof(*new(uint))
-			case reflect.Uint8:
-				sizeElem = unsafe.Sizeof(*new(uint8))
-			case reflect.Uint16:
-				sizeElem = unsafe.Sizeof(*new(uint16))
-			case reflect.Uint32:
-				sizeElem = unsafe.Sizeof(*new(uint32))
-			case reflect.Uint64:
-				sizeElem = unsafe.Sizeof(*new(uint64))
-			case reflect.Float32:
-				sizeElem = unsafe.Sizeof(*new(float32))
-			case reflect.Float64:
-				sizeElem = unsafe.Sizeof(*new(float64))
-			case reflect.String:
-				sizeElem = unsafe.Sizeof(*new(string))
+			case reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+				reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+				reflect.Float32, reflect.Float64, reflect.String:
 			default:
 				currentCounter++
 				continue
 			}
+			values := reflect.NewAt(field.xField.Type, field.xField.Pointer(a.ptr)).Elem()
+			if values.Kind() == reflect.Ptr {
+				if values.IsNil() {
+					values = reflect.Zero(fType)
+				} else {
+					values = values.Elem()
+				}
+			}
 
-			sHdr := (*reflect.SliceHeader)(unsafe.Add(a.ptr, field.xField.Offset) /*unsafe.Pointer(&s)*/)
-
-			if sHdr.Len == 0 {
+			if values.Len() == 0 {
 				result[currentCounter] = a.config.NullValue
 				wasStrings[currentCounter] = true
 				types[currentCounter] = field.xField.Type.String()
@@ -500,19 +471,19 @@ func (a *Accessor) stringifyRegularFields(writer *writer, headers *[]string, att
 				continue
 			}
 
-			if sHdr.Len > 1 {
-				result = append(result, make([]string, sHdr.Len-1)...)
-				wasStrings = append(wasStrings, make([]bool, sHdr.Len-1)...)
-				types = append(types, make([]string, sHdr.Len-1)...)
-				newHeaders = append(newHeaders, make([]string, sHdr.Len-1)...)
-				newAttrNames = append(newAttrNames, make([]string, sHdr.Len-1)...)
-				newAreAttributes = append(newAreAttributes, make([]bool, sHdr.Len-1)...)
-				shouldWrite = append(shouldWrite, make([]bool, sHdr.Len-1)...)
-				fieldNames = append(fieldNames, make([]string, sHdr.Len-1)...)
+			if values.Len() > 1 {
+				result = append(result, make([]string, values.Len()-1)...)
+				wasStrings = append(wasStrings, make([]bool, values.Len()-1)...)
+				types = append(types, make([]string, values.Len()-1)...)
+				newHeaders = append(newHeaders, make([]string, values.Len()-1)...)
+				newAttrNames = append(newAttrNames, make([]string, values.Len()-1)...)
+				newAreAttributes = append(newAreAttributes, make([]bool, values.Len()-1)...)
+				shouldWrite = append(shouldWrite, make([]bool, values.Len()-1)...)
+				fieldNames = append(fieldNames, make([]string, values.Len()-1)...)
 			}
 
-			for j := 0; j < sHdr.Len; j++ {
-				zPtr := unsafe.Pointer(sHdr.Data + uintptr(j)*sizeElem)
+			for j := 0; j < values.Len(); j++ {
+				zPtr := values.Index(j).Addr().UnsafePointer()
 				var z string
 				switch feKind {
 				case reflect.Bool:
