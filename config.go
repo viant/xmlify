@@ -12,6 +12,8 @@ const tabularStyle = "tabularStyle"
 type (
 	Config struct {
 		Style string // TODO MFI delete style
+		// PreserveEmptyHolders emits a field for nil/empty typed relation holders.
+		PreserveEmptyHolders bool
 		// TODO MFI move below to another config
 		RootTag                string
 		HeaderTag              string

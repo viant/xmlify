@@ -31,6 +31,17 @@ func (w *writer) writeRegularAllObjects(acc *Accessor, parentLevel bool) {
 		fieldName = acc.fieldTag.Name
 	}
 
+	if w.config.PreserveEmptyHolders && !parentLevel && w.size == 0 && fieldName != "" && acc.field != nil {
+		attribute := ""
+		if acc._parent != nil && acc._parent.ptr != nil {
+			value := reflect.NewAt(acc.field.Type, acc.field.Pointer(acc._parent.ptr)).Elem()
+			if (value.Kind() == reflect.Pointer || value.Kind() == reflect.Slice) && value.IsNil() && w.config.RegularNullValue != "" {
+				attribute = " " + w.config.RegularNullValue
+			}
+		}
+		w.buffer.writeString(w.config.NewLineSeparator + "<" + fieldName + attribute + "/>")
+		return
+	}
 	// TODO move
 	rowFieldName = w.config.RegularRowTag
 	if fieldKind == reflect.Slice && fieldName != "" {
@@ -192,7 +203,7 @@ func (w *writer) writeRegularAllObjects(acc *Accessor, parentLevel bool) {
 					}
 					_, childSize := child.values()
 
-					if childSize > 0 {
+					if childSize > 0 || w.config.PreserveEmptyHolders && !field.tag.Ignore && !field.tag.Omitempty {
 						tmpSize := w.size
 						w.size = childSize
 						w.writeRegularAllObjects(child, false)
